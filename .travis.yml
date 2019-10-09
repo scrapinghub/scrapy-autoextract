@@ -1,0 +1,17 @@
+language: python
+
+install:
+  - pip install -U -r test/requirements.txt
+
+script:
+  - flake8 scrapy_autoextract
+  - pytest -ra -sv test
+
+deploy:
+  provider: pypi
+  user: scrapinghub
+  password:
+    secure: ...
+  on:
+    tags: true
+    repo: scrapinghub/scrapy-autoextract
