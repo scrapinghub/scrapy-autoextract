@@ -8,6 +8,16 @@ The middleware adds the result of AutoExtract to ``response.meta['autoextract']`
 for consumption by the spider.
 
 
+Installation
+===========
+
+::
+
+    pip install scrapy-autoextract
+
+scrapy-autoextract requires Python 3.
+
+
 Configuration
 =============
 1. Add the AutoExtract downloader middleware in the settings file::
