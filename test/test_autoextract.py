@@ -24,7 +24,7 @@ def setup_module(module):
     spider = Spider('spidr')
 
 
-def _mock_crawler(spider, settings=None):
+def _mock_mw(spider, settings=None):
 
     class MockedDownloader:
         slots = {}
@@ -42,12 +42,11 @@ def _mock_crawler(spider, settings=None):
     # with `spider` instead of `type(spider)` raises an exception
     crawler = get_crawler(type(spider), settings)
     crawler.engine = MockedEngine()
-    return crawler
+    return AutoExtractMiddleware.from_crawler(crawler)
 
 
 def _assert_disabled(spider, settings=None):
-    crawler = _mock_crawler(spider, settings)
-    mw = AutoExtractMiddleware.from_crawler(crawler)
+    mw = _mock_mw(spider, settings)
     req = Request('http://quotes.toscrape.com', meta=AUTOX_META)
     out = mw.process_request(req, spider)
     assert out is None
@@ -61,8 +60,7 @@ def _assert_enabled(spider,
                     url='http://quotes.toscrape.com',
                     proxyurl='autoextract.scrapinghub.com',
                     proxyauth=basic_auth_header('apikey', '')):
-    crawler = _mock_crawler(spider, settings)
-    mw = AutoExtractMiddleware.from_crawler(crawler)
+    mw = _mock_mw(spider, settings)
 
     req = Request(url, meta=AUTOX_META)
     out = mw.process_request(req, spider)
@@ -84,8 +82,7 @@ def test_bad_config():
 
 
 def test_disabled():
-    crawler = _mock_crawler(spider, MW_SETTINGS)
-    mw = AutoExtractMiddleware.from_crawler(crawler)
+    mw = _mock_mw(spider, MW_SETTINGS)
     req = Request('http://quotes.toscrape.com', meta={'autoextract': {}})
     out = mw.process_request(req, spider)
     assert out is None
@@ -93,3 +90,21 @@ def test_disabled():
 
 def test_enabled():
     _assert_enabled(spider, MW_SETTINGS)
+
+
+def test_timeout():
+    config = dict(MW_SETTINGS)
+    # add a very low timeout - the middleware will ignore it
+    config['AUTOEXTRACT_TIMEOUT'] = 1
+    mw = _mock_mw(spider, config)
+    req = Request('http://quotes.toscrape.com', meta=AUTOX_META)
+    out = mw.process_request(req, spider)
+    assert out is not None
+    assert out.meta['download_timeout'] >= 180
+
+    config['AUTOEXTRACT_TIMEOUT'] = 10_000
+    mw = _mock_mw(spider, config)
+    req = Request('http://quotes.toscrape.com', meta=AUTOX_META)
+    out = mw.process_request(req, spider)
+    assert out is not None
+    assert out.meta['download_timeout'] == 10_000
