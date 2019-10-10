@@ -1,17 +1,18 @@
 language: python
 
 install:
-  - pip install -U -r test/requirements.txt
+- pip install -U -r test/requirements.txt
 
 script:
-  - flake8 scrapy_autoextract
-  - pytest -ra -sv test
+- flake8 scrapy_autoextract
+- pytest -ra -sv test
 
 deploy:
   provider: pypi
-  user: scrapinghub
+  user: "__token__"
+  distributions: "sdist bdist_wheel"
   password:
-    secure: ...
+    secure: c7Qq/nEX4bJtZOhNpBG0Vp9ypttrP1MmcgFtIRsyXe6TnCOBZrmNgmvVrOtdXNBhlB7gktZRMSJ6SEYz1fC7JHwI+IyIoTjSbc6WlfcyMjnrd0V6BONKBJ2qBqCB50/nIgP7OVS+js6xXXmkOg/dKkvJUDK/s56cQoTXeIvJonWl7Krg6pGdmMZSLQwxzZ/IwtlVMHsGmrChnCIsPiw1V2bYXOjVcGxAc3v83lCg+mSMG4UYu+wMAeNt5IkZMsQL/kmGZchJNc4h0dzSCCK76DmKvwHRahSzF5AWZ/aaolRgnaxL11/P4N/3VqFfUjQEfrEgdB00EyxeS2I3PFXz++7dsLPbbzwE+QB6qhtNld2u1uVhLZv9NtjOcivPy3yGmiczjUasQSf3o/Ec6C7eZpKLaY2blsk8a9lHNAbgUOuuCP0e/ThZa1gNEvQENmPMgTTKzuSu0Rc+YmA8Nthw3unuslWxOanLrqJLFwxt6dy+vTkHG2jcqq9Cx8KA0e6lRsFjTGzOgkjrcV7kvj/wr1eoClQQX7c9LeMHwn+aNeVf535Y//dcio8M7gheSur8DXV5Hm7rN9vB6x0t/tcvXGUnTAMRi0GMksoNBQhcmg08Jd2vyXw5sxgms9ogkQcWJSN/B1He2nl0BLRykx2lNkrSk9n6/wX3r8lJBkpHgrQ=
   on:
     tags: true
     repo: scrapinghub/scrapy-autoextract
