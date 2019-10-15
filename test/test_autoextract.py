@@ -1,5 +1,3 @@
-import os
-import sys
 import pytest
 
 from w3lib.http import basic_auth_header
@@ -7,7 +5,6 @@ from scrapy.http import Request, Response
 from scrapy.spiders import Spider
 from scrapy.utils.test import get_crawler
 
-sys.path.append(os.getcwd())
 from scrapy_autoextract import AutoExtractMiddleware
 from scrapy_autoextract.middlewares import AutoExtractConfigError
 
@@ -58,15 +55,15 @@ def _assert_disabled(spider, settings=None):
 def _assert_enabled(spider,
                     settings=None,
                     url='http://quotes.toscrape.com',
-                    proxyurl='autoextract.scrapinghub.com',
-                    proxyauth=basic_auth_header('apikey', '')):
+                    api_url='autoextract.scrapinghub.com',
+                    api_auth=basic_auth_header('apikey', '')):
     mw = _mock_mw(spider, settings)
 
     req = Request(url, meta=AUTOX_META)
     out = mw.process_request(req, spider)
-    assert proxyurl in out.url
+    assert api_url in out.url
     assert out.meta['autoextract'].get('enabled')
-    assert out.headers.get('Authorization') == proxyauth
+    assert out.headers.get('Authorization') == api_auth
 
     resp = Response(out.url, request=out, body=b'[{}]')
     proc = mw.process_response(out, resp, spider)

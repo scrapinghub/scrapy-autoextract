@@ -23,7 +23,7 @@ Configuration
 1. Add the AutoExtract downloader middleware in the settings file::
 
     DOWNLOADER_MIDDLEWARES = {
-        'scrapy_autoextract.middlewares.AutoExtractMiddleware': 543,
+        'scrapy_autoextract.AutoExtractMiddleware': 543,
     }
 
 Note that this should be the last downloader middleware to be executed.
