@@ -99,9 +99,9 @@ def test_timeout():
     assert out is not None
     assert out.meta['download_timeout'] >= 180
 
-    config['AUTOEXTRACT_TIMEOUT'] = 10_000
+    config['AUTOEXTRACT_TIMEOUT'] = 10000
     mw = _mock_mw(spider, config)
     req = Request('http://quotes.toscrape.com', meta=AUTOX_META)
     out = mw.process_request(req, spider)
     assert out is not None
-    assert out.meta['download_timeout'] == 10_000
+    assert out.meta['download_timeout'] == 10000
