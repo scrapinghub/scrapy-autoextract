@@ -1,11 +1,18 @@
 language: python
 
-install:
-- pip install -U -r test/requirements.txt
+matrix:
+  include:
+    - python: 3.6
+      env: TOXENV=py36
+    - python: 3.7
+      env: TOXENV=py37
+      dist: xenial
 
-script:
-- flake8 scrapy_autoextract
-- pytest -ra -sv test
+# command to install dependencies
+install: pip install -U tox
+
+# command to run tests
+script: tox
 
 deploy:
   provider: pypi
@@ -16,3 +23,4 @@ deploy:
   on:
     tags: true
     repo: scrapinghub/scrapy-autoextract
+    condition: $TOXENV == py37
