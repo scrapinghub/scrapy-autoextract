@@ -8,15 +8,14 @@ matrix:
       env: TOXENV=py36
     - python: 3.7
       env: TOXENV=py37
-      dist: xenial
+    - python: 3.7
+      env: TOXENV=flake8
 
 # command to install dependencies
 install: pip install -U tox
 
 # command to run tests
-script:
-  - tox -e flake8
-  - tox
+script: tox
 
 deploy:
   provider: pypi
