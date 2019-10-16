@@ -145,7 +145,7 @@ class AutoExtractMiddleware(object):
         url = request.meta[AUTOEXTRACT_META_KEY]['original_url']
 
         try:
-            result = json.loads(response.body)[0]
+            result = json.loads(response.body.decode('utf8'))[0]
         except Exception:
             self.inc_metric('autoextract/errors/json_decode')
             raise AutoExtractError('Cannot parse JSON response from AutoExtract'
