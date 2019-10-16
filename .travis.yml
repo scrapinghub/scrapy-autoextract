@@ -1,0 +1,29 @@
+language: python
+
+matrix:
+  include:
+    - python: 3.5
+      env: TOXENV=py35
+    - python: 3.6
+      env: TOXENV=py36
+    - python: 3.7
+      env: TOXENV=py37
+    - python: 3.7
+      env: TOXENV=flake8
+
+# command to install dependencies
+install: pip install -U tox
+
+# command to run tests
+script: tox
+
+deploy:
+  provider: pypi
+  user: "__token__"
+  distributions: "sdist bdist_wheel"
+  password:
+    secure: c7Qq/nEX4bJtZOhNpBG0Vp9ypttrP1MmcgFtIRsyXe6TnCOBZrmNgmvVrOtdXNBhlB7gktZRMSJ6SEYz1fC7JHwI+IyIoTjSbc6WlfcyMjnrd0V6BONKBJ2qBqCB50/nIgP7OVS+js6xXXmkOg/dKkvJUDK/s56cQoTXeIvJonWl7Krg6pGdmMZSLQwxzZ/IwtlVMHsGmrChnCIsPiw1V2bYXOjVcGxAc3v83lCg+mSMG4UYu+wMAeNt5IkZMsQL/kmGZchJNc4h0dzSCCK76DmKvwHRahSzF5AWZ/aaolRgnaxL11/P4N/3VqFfUjQEfrEgdB00EyxeS2I3PFXz++7dsLPbbzwE+QB6qhtNld2u1uVhLZv9NtjOcivPy3yGmiczjUasQSf3o/Ec6C7eZpKLaY2blsk8a9lHNAbgUOuuCP0e/ThZa1gNEvQENmPMgTTKzuSu0Rc+YmA8Nthw3unuslWxOanLrqJLFwxt6dy+vTkHG2jcqq9Cx8KA0e6lRsFjTGzOgkjrcV7kvj/wr1eoClQQX7c9LeMHwn+aNeVf535Y//dcio8M7gheSur8DXV5Hm7rN9vB6x0t/tcvXGUnTAMRi0GMksoNBQhcmg08Jd2vyXw5sxgms9ogkQcWJSN/B1He2nl0BLRykx2lNkrSk9n6/wX3r8lJBkpHgrQ=
+  on:
+    tags: true
+    repo: scrapinghub/scrapy-autoextract
+    condition: $TOXENV == py37
