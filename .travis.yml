@@ -14,7 +14,9 @@ matrix:
 install: pip install -U tox
 
 # command to run tests
-script: tox
+script:
+  - tox -e flake8
+  - tox
 
 deploy:
   provider: pypi

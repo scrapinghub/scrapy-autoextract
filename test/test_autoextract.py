@@ -65,7 +65,8 @@ def _assert_enabled(spider,
     assert out.meta['autoextract'].get('enabled')
     assert out.headers.get('Authorization') == api_auth
 
-    resp = Response(out.url, request=out, body=b'[{}]')
+    resp = Response(out.url, request=out)
+    resp._body = '[{}]'  # workaround to make the body work with Python 3.5+
     proc = mw.process_response(out, resp, spider)
     assert proc.meta['autoextract'].get('original_url') == url
     assert isinstance(proc.meta['autoextract'].get('article'), dict)
