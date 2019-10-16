@@ -15,7 +15,7 @@ Installation
 
     pip install scrapy-autoextract
 
-scrapy-autoextract requires Python 3.
+scrapy-autoextract requires Python 3.5+
 
 
 Configuration
