@@ -19,11 +19,11 @@ script: tox
 
 deploy:
   provider: pypi
-  user: "__token__"
-  distributions: "sdist bdist_wheel"
+  user: __token__
+  distributions: sdist bdist_wheel
   password:
-    secure: c7Qq/nEX4bJtZOhNpBG0Vp9ypttrP1MmcgFtIRsyXe6TnCOBZrmNgmvVrOtdXNBhlB7gktZRMSJ6SEYz1fC7JHwI+IyIoTjSbc6WlfcyMjnrd0V6BONKBJ2qBqCB50/nIgP7OVS+js6xXXmkOg/dKkvJUDK/s56cQoTXeIvJonWl7Krg6pGdmMZSLQwxzZ/IwtlVMHsGmrChnCIsPiw1V2bYXOjVcGxAc3v83lCg+mSMG4UYu+wMAeNt5IkZMsQL/kmGZchJNc4h0dzSCCK76DmKvwHRahSzF5AWZ/aaolRgnaxL11/P4N/3VqFfUjQEfrEgdB00EyxeS2I3PFXz++7dsLPbbzwE+QB6qhtNld2u1uVhLZv9NtjOcivPy3yGmiczjUasQSf3o/Ec6C7eZpKLaY2blsk8a9lHNAbgUOuuCP0e/ThZa1gNEvQENmPMgTTKzuSu0Rc+YmA8Nthw3unuslWxOanLrqJLFwxt6dy+vTkHG2jcqq9Cx8KA0e6lRsFjTGzOgkjrcV7kvj/wr1eoClQQX7c9LeMHwn+aNeVf535Y//dcio8M7gheSur8DXV5Hm7rN9vB6x0t/tcvXGUnTAMRi0GMksoNBQhcmg08Jd2vyXw5sxgms9ogkQcWJSN/B1He2nl0BLRykx2lNkrSk9n6/wX3r8lJBkpHgrQ=
+    secure: RLAvXglJ0mFwJu6SjgBWIxCVsLpRTorD/5wD8veUXqGha7U+5NT8et7U92GoW7UwYCpo8wXdQ4pm94zs8pH6aDr2O4geizk4a3twp02zsBOE3EG3CugEXKHdH0F4M0p8S7hIvVEwZ6JlnYzoQsaM1XYiBA2pmeD1KlkNZtnAVbD8pGe69Xvt9HY/6Qg0DoDahqOqNEh3l0/fU5RzKE0+LPaioXgIhm2AKdaekNV4wMQwECLcpcgaUVK0d6EDRv2/K+QQmMD1iI1xlbz0FZAjrcDL+8SRtOTT5PilfbcycGdtXo57MEJBzXH+fEXr6JQro5KhioCfQzEiggcQKNaor/w6xoiLzBzo06NABXwskK1cj8wY/A0kpCMgvn72jJdyXfq2EzNq7ItzVL8ZwcABQ+t1U99ECbaOibM7oK3r4uKz2BXTWZNAL9QiOWSlBw4J/kCAtZJr/lsbLKsPRmO+6I+Mz6yAsxY312yW49mFRcoT7Rv+Jr7eHDmBXcpNHsH94NLSh7JvLfsIYN4FJmoaMSXAOe2eOA48hp64frxZpWY/mNxHEFgxiPHy4C5uI63ouTN2Uhw9uLld9TdOmKPyG4J6d6K9YecyeQZtuoOuh3SF79iTzAIBbl6EXHwPHkok7lUpOMChjWtLUFE1TM0gvhHs5QsQrTq4ldAWZ+VZx7g=
   on:
     tags: true
     repo: scrapinghub/scrapy-autoextract
-    condition: $TOXENV == py37
+    condition: "$TOXENV == py37"
