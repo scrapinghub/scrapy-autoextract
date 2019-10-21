@@ -8,7 +8,7 @@ from scrapy.spiders import Spider
 from scrapy.utils.test import get_crawler
 
 from scrapy_autoextract import AutoExtractMiddleware
-from scrapy_autoextract.middlewares import AutoExtractConfigError
+from scrapy_autoextract.middlewares import AutoExtractError, AutoExtractConfigError
 
 AUTOX_META = {'autoextract': {'enabled': True}}
 
@@ -89,6 +89,17 @@ def test_disabled():
 
 def test_enabled():
     _assert_enabled(spider, MW_SETTINGS)
+
+
+def test_request_error():
+    mw = _mock_mw(spider, MW_SETTINGS)
+    req = Request('http://quotes.toscrape.com', meta=AUTOX_META)
+
+    out = mw.process_request(req, spider)
+    err = b'{"title":"No authentication token provided","type":"http://errors.xod.scrapinghub.com/unauthorized.html"}'
+    resp = Response(out.url, request=out, body=err)
+    with pytest.raises(AutoExtractError):
+        mw.process_response(out, resp, spider)
 
 
 def test_timeout():

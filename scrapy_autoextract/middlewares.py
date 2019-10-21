@@ -151,11 +151,23 @@ class AutoExtractMiddleware(object):
         url = request.meta[AUTOEXTRACT_META_KEY]['original_url']
 
         try:
-            result = json.loads(response.body.decode('utf8'))[0]
+            response_object = json.loads(response.body.decode('utf8'))
         except Exception:
             self.inc_metric('autoextract/errors/json_decode')
             raise AutoExtractError('Cannot parse JSON response from AutoExtract'
                                    ' for {}: {}'.format(url, response.body))
+
+        result = None
+        if isinstance(response_object, list):
+            result = response_object[0]
+        elif isinstance(response_object, dict):
+            self.inc_metric('autoextract/errors/result_error')
+            raise AutoExtractError('Received error from AutoExtract for '
+                                   '{}: {}'.format(url, response_object))
+        else:
+            self.inc_metric('autoextract/errors/result_error')
+            raise AutoExtractError('Received invalid response from AutoExtract for '
+                                   '{}: {}'.format(url, response_object))
 
         if result.get('error'):
             self.inc_metric('autoextract/errors/result_error')
