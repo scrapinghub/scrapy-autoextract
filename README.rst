@@ -9,7 +9,7 @@ for consumption by the spider.
 
 
 Installation
-===========
+============
 
 ::
 
@@ -20,7 +20,8 @@ scrapy-autoextract requires Python 3.5+
 
 Configuration
 =============
-1. Add the AutoExtract downloader middleware in the settings file::
+
+Add the AutoExtract downloader middleware in the settings file::
 
     DOWNLOADER_MIDDLEWARES = {
         'scrapy_autoextract.AutoExtractMiddleware': 543,
