@@ -2,6 +2,19 @@
 Scrapy & Autoextract API integration
 ====================================
 
+.. image:: https://img.shields.io/pypi/v/scrapy-autoextract.svg
+   :target: https://pypi.org/project/scrapy-autoextract/
+   :alt: PyPI Version
+
+.. image:: https://img.shields.io/pypi/pyversions/scrapy-autoextract.svg
+    :target: https://pypi.org/project/scrapy-autoextract/
+    :alt: Supported Python Versions
+
+.. image:: https://travis-ci.org/scrapinghub/scrapy-autoextract.svg?branch=master
+    :target: https://travis-ci.org/scrapinghub/scrapy-autoextract
+    :alt: Build Status
+
+
 This library integrates ScrapingHub's AI Enabled Automatic Data Extraction
 into a Scrapy spider using a downloader middleware.
 The middleware adds the result of AutoExtract to ``response.meta['autoextract']``
