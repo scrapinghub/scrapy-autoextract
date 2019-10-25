@@ -157,15 +157,16 @@ class AutoExtractMiddleware(object):
             raise AutoExtractError('Cannot parse JSON response from AutoExtract'
                                    ' for {}: {}'.format(url, response.body))
 
+        if response.status != 200:
+            self.inc_metric('autoextract/errors/response_error')
+            raise AutoExtractError('Received error from AutoExtract for '
+                                   '{}: {}'.format(url, response_object))
+
         result = None
         if isinstance(response_object, list):
             result = response_object[0]
-        elif isinstance(response_object, dict):
-            self.inc_metric('autoextract/errors/result_error')
-            raise AutoExtractError('Received error from AutoExtract for '
-                                   '{}: {}'.format(url, response_object))
         else:
-            self.inc_metric('autoextract/errors/result_error')
+            self.inc_metric('autoextract/errors/type_error')
             raise AutoExtractError('Received invalid response from AutoExtract for '
                                    '{}: {}'.format(url, response_object))
 
