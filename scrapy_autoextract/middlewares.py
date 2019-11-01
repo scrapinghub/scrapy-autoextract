@@ -158,7 +158,7 @@ class AutoExtractMiddleware(object):
                                    ' for {}: {}'.format(url, response.body))
 
         if response.status != 200:
-            self.inc_metric('autoextract/errors/response_error')
+            self.inc_metric('autoextract/errors/response_error/{}'.format(response.status))
             raise AutoExtractError('Received error from AutoExtract for '
                                    '{}: {}'.format(url, response_object))
 
