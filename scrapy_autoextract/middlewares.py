@@ -118,7 +118,10 @@ class AutoExtractMiddleware(object):
         # Define concurrency settings
         self._set_download_slot(request, request.meta)
 
-        payload = [{'url': request.url, 'pageType': page_type}]
+        payload = {'url': request.url, 'pageType': page_type}
+        if request.meta.get('extra') and isinstance(request.meta['extra'], dict):
+            payload.update(request.meta['extra'])
+
         headers = Headers({
             'Content-Type': 'application/json',
             'Authorization': basic_auth_header(self._api_user, self._api_pass)
@@ -128,7 +131,7 @@ class AutoExtractMiddleware(object):
             url=self._api_url,
             method='POST',
             headers=headers,
-            body=json.dumps(payload, sort_keys=True),
+            body=json.dumps([payload], sort_keys=True),
         )
 
         self.inc_metric('autoextract/request_count')
