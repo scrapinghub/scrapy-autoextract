@@ -116,5 +116,5 @@ def test_meta_extra():
     req = Request('http://quotes.toscrape.com', meta=meta)
     out = mw.process_request(req, spider)
     assert out is not None
-    payload = json.loads(out.body)[0]
+    payload = json.loads(out.body.decode('utf8'))[0]
     assert payload['some'] == 'stuff'
