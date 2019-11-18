@@ -1,3 +1,4 @@
+import json
 import pytest
 
 from w3lib.http import basic_auth_header
@@ -105,3 +106,15 @@ def test_timeout():
     out = mw.process_request(req, spider)
     assert out is not None
     assert out.meta['download_timeout'] == 10000
+
+
+def test_meta_extra():
+    config = dict(MW_SETTINGS)
+    mw = _mock_mw(spider, config)
+    meta = dict(AUTOX_META)
+    meta['extra'] = {'some': 'stuff'}
+    req = Request('http://quotes.toscrape.com', meta=meta)
+    out = mw.process_request(req, spider)
+    assert out is not None
+    payload = json.loads(out.body)[0]
+    assert payload['some'] == 'stuff'
