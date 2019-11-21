@@ -1,5 +1,6 @@
 import json
 import pytest
+from copy import deepcopy
 
 from w3lib.http import basic_auth_header
 from scrapy.http import Request, Response
@@ -111,7 +112,7 @@ def test_timeout():
 def test_meta_extra():
     config = dict(MW_SETTINGS)
     mw = _mock_mw(spider, config)
-    meta = dict(AUTOX_META)
+    meta = deepcopy(AUTOX_META)
     meta['autoextract']['extra'] = {'some': 'stuff'}
     req = Request('http://quotes.toscrape.com', meta=meta)
     out = mw.process_request(req, spider)
