@@ -112,7 +112,7 @@ def test_meta_extra():
     config = dict(MW_SETTINGS)
     mw = _mock_mw(spider, config)
     meta = dict(AUTOX_META)
-    meta['extra'] = {'some': 'stuff'}
+    meta['autoextract']['extra'] = {'some': 'stuff'}
     req = Request('http://quotes.toscrape.com', meta=meta)
     out = mw.process_request(req, spider)
     assert out is not None

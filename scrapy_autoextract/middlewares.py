@@ -119,8 +119,10 @@ class AutoExtractMiddleware(object):
         self._set_download_slot(request, request.meta)
 
         payload = {'url': request.url, 'pageType': page_type}
-        if request.meta.get('extra') and isinstance(request.meta['extra'], dict):
-            payload.update(request.meta['extra'])
+
+        extra_payload = self._get_extra_payload(request)
+        if extra_payload:
+            payload.update(extra_payload)
 
         headers = Headers({
             'Content-Type': 'application/json',
@@ -235,6 +237,14 @@ class AutoExtractMiddleware(object):
             # Use a single slot for all AutoExtract requests
             meta['download_slot'] = '__AutoExtract__'
         # Else, use standard Scrapy concurrency setup
+
+    def _get_extra_payload(self, request):
+        extra_payload = None
+        if request.meta['autoextract'].get('extra'):
+            if not isinstance(request.meta['autoextract']['extra'], dict):
+                raise AutoExtractError('Invalid type for "extra" payload')
+            extra_payload = request.meta['autoextract']['extra']
+        return extra_payload
 
     def inc_metric(self, key, **kwargs):
         self.crawler.stats.inc_value(key, **kwargs)
