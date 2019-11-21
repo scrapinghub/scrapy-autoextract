@@ -120,6 +120,7 @@ class AutoExtractMiddleware(object):
 
         payload = {'url': request.url, 'pageType': page_type}
 
+        # Add the extra payload, if available
         extra_payload = self._get_extra_payload(request)
         if extra_payload:
             payload.update(extra_payload)
