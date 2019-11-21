@@ -61,6 +61,8 @@ Available settings:
   Current available options are `"product"` and `"article"`.
   Can also be defined on ``spider.page_type``, or ``{'autoextract': {'pageType': '...'}}`` request meta.
   This is required for the AutoExtract classifier to know what kind of page needs to be extracted.
+- `extra` [optional] allows sending extra payload data to your AutoExtract request.
+  Must be specified as ``{'autoextract': {'extra': {}}}`` request meta and must be a dict.
 
 
 Within the spider, consuming the AutoExtract result is as easy as::
