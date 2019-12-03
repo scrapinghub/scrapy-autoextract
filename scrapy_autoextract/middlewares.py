@@ -149,16 +149,21 @@ class AutoExtractMiddleware(object):
             return response
 
         url = request.meta[AUTOEXTRACT_META_KEY]['original_url']
+        body = response.body.decode('utf8')
 
         try:
-            response_object = json.loads(response.body.decode('utf8'))
+            response_object = json.loads(body)
         except Exception:
             self.inc_metric('autoextract/errors/json_decode')
+            logger.debug('AutoExtract response status=%i  headers=%s  content=%s',
+                         response.status, response.headers.to_unicode_dict(), body)
             raise AutoExtractError('Cannot parse JSON response from AutoExtract'
                                    ' for {}: {}'.format(url, response.body))
 
         if response.status != 200:
             self.inc_metric('autoextract/errors/response_error/{}'.format(response.status))
+            logger.debug('AutoExtract response status=%i  headers=%s  content=%s',
+                         response.status, response.headers.to_unicode_dict(), body)
             raise AutoExtractError('Received error from AutoExtract for '
                                    '{}: {}'.format(url, response_object))
 
@@ -167,11 +172,15 @@ class AutoExtractMiddleware(object):
             result = response_object[0]
         else:
             self.inc_metric('autoextract/errors/type_error')
+            logger.debug('AutoExtract response status=%i  headers=%s  content=%s',
+                         response.status, response.headers.to_unicode_dict(), body)
             raise AutoExtractError('Received invalid response from AutoExtract for '
                                    '{}: {}'.format(url, response_object))
 
         if result.get('error'):
             self.inc_metric('autoextract/errors/result_error')
+            logger.debug('AutoExtract response status=%i  headers=%s  content=%s',
+                         response.status, response.headers.to_unicode_dict(), body)
             raise AutoExtractError('Received error from AutoExtract for '
                                    '{}: {}'.format(url, result["error"]))
 
