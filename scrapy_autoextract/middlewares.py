@@ -276,7 +276,7 @@ class AutoExtractMiddleware(object):
         extra_data = None
         if request.meta['autoextract'].get(name):
             if not isinstance(request.meta['autoextract'][name], dict):
-                raise AutoExtractError(f'Invalid type for "{name}" meta')
+                raise AutoExtractError('Invalid type for "{}" meta'.format(name))
             extra_data = request.meta['autoextract'][name]
         return extra_data
 
