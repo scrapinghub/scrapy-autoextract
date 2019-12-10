@@ -8,6 +8,8 @@ from scrapy.utils.python import global_object_name
 from scrapy.exceptions import IgnoreRequest, DropItem
 from w3lib.http import basic_auth_header
 
+from .__version__ import __version__
+
 logger = logging.getLogger(__name__)
 
 AUTOEXTRACT_META_KEY = '_autoextract_processed'
@@ -122,14 +124,19 @@ class AutoExtractMiddleware(object):
         payload = {'url': request.url, 'pageType': page_type}
 
         # Add the extra payload, if available
-        extra_payload = self._get_extra_payload(request)
+        extra_payload = self._get_meta_name(request, 'extra')
         if extra_payload:
             payload.update(extra_payload)
 
         headers = Headers({
             'Content-Type': 'application/json',
+            'User-Agent': 'AutoExtract Middleware v{}'.format(__version__),
             'Authorization': basic_auth_header(self._api_user, self._api_pass)
         })
+        # Update the headers, if provided
+        extra_headers = self._get_meta_name(request, 'headers')
+        if extra_headers:
+            headers.update(extra_headers)
 
         new_request = request.replace(
             url=self._api_url,
@@ -265,13 +272,13 @@ class AutoExtractMiddleware(object):
             meta['download_slot'] = '__AutoExtract__'
         # Else, use standard Scrapy concurrency setup
 
-    def _get_extra_payload(self, request):
-        extra_payload = None
-        if request.meta['autoextract'].get('extra'):
-            if not isinstance(request.meta['autoextract']['extra'], dict):
-                raise AutoExtractError('Invalid type for "extra" payload')
-            extra_payload = request.meta['autoextract']['extra']
-        return extra_payload
+    def _get_meta_name(self, request, name):
+        extra_data = None
+        if request.meta['autoextract'].get(name):
+            if not isinstance(request.meta['autoextract'][name], dict):
+                raise AutoExtractError(f'Invalid type for "{name}" meta')
+            extra_data = request.meta['autoextract'][name]
+        return extra_data
 
     def inc_metric(self, key, **kwargs):
         self.crawler.stats.inc_value(key, **kwargs)
