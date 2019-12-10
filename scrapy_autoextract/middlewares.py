@@ -13,6 +13,7 @@ from .__version__ import __version__
 logger = logging.getLogger(__name__)
 
 AUTOEXTRACT_META_KEY = '_autoextract_processed'
+USER_AGENT = 'AutoExtract Middleware v{}'.format(__version__)
 SUPPORTED_PAGETYPES = ('article', 'product')
 MAX_ERROR_BODY = 2000
 
@@ -130,7 +131,7 @@ class AutoExtractMiddleware(object):
 
         headers = Headers({
             'Content-Type': 'application/json',
-            'User-Agent': 'AutoExtract Middleware v{}'.format(__version__),
+            'User-Agent': USER_AGENT,
             'Authorization': basic_auth_header(self._api_user, self._api_pass)
         })
         # Update the headers, if provided
