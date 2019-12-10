@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 AUTOEXTRACT_META_KEY = '_autoextract_processed'
 SUPPORTED_PAGETYPES = ('article', 'product')
+MAX_ERROR_BODY = 2000
 
 
 class AutoExtractError(Exception):
@@ -149,16 +150,34 @@ class AutoExtractMiddleware(object):
             return response
 
         url = request.meta[AUTOEXTRACT_META_KEY]['original_url']
+        body = response.body.decode('utf8')
 
         try:
-            result = json.loads(response.body.decode('utf8'))[0]
+            response_object = json.loads(body)
         except Exception:
             self.inc_metric('autoextract/errors/json_decode')
+            self._log_debug_error(response, body)
             raise AutoExtractError('Cannot parse JSON response from AutoExtract'
-                                   ' for {}: {}'.format(url, response.body))
+                                   ' for {}: {}'.format(url, response.body[:MAX_ERROR_BODY]))
+
+        if response.status != 200:
+            self.inc_metric('autoextract/errors/response_error/{}'.format(response.status))
+            self._log_debug_error(response, body)
+            raise AutoExtractError('Received error from AutoExtract for '
+                                   '{}: {}'.format(url, response_object))
+
+        result = None
+        if isinstance(response_object, list):
+            result = response_object[0]
+        else:
+            self.inc_metric('autoextract/errors/type_error')
+            self._log_debug_error(response, body)
+            raise AutoExtractError('Received invalid response from AutoExtract for '
+                                   '{}: {}'.format(url, response_object))
 
         if result.get('error'):
             self.inc_metric('autoextract/errors/result_error')
+            self._log_debug_error(response, body)
             raise AutoExtractError('Received error from AutoExtract for '
                                    '{}: {}'.format(url, result["error"]))
 
@@ -252,6 +271,13 @@ class AutoExtractMiddleware(object):
 
     def set_metric(self, key, value):
         self.crawler.stats.set_value(key, value)
+
+    def _log_debug_error(self, response, body):
+        if len(body) > MAX_ERROR_BODY:
+            half_body = MAX_ERROR_BODY // 2
+            body = body[:half_body] + ' [...] ' + body[-half_body:]
+        logger.debug('AutoExtract response status=%i  headers=%s  content=%s', response.status,
+                     response.headers.to_unicode_dict(), body)
 
     def autoextract_latency_stats(self):
         self.set_metric('autoextract/response_count', self.nr_resp)
