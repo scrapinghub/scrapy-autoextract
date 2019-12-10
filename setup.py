@@ -4,16 +4,19 @@
 import os
 from setuptools import setup, find_packages
 
+NAME = 'scrapy-autoextract'
+
 
 def get_version():
+    about = {}
     here = os.path.abspath(os.path.dirname(__file__))
-    path = os.path.join(here, 'scrapy_autoextract', 'VERSION')
-    with open(path) as f:
-        return f.read().strip()
+    with open(os.path.join(here, NAME.replace('-', '_'), '__version__.py')) as f:
+        exec(f.read(), about)
+    return about['__version__']
 
 
 setup(
-    name='scrapy-autoextract',
+    name=NAME,
     version=get_version(),
     author='Scrapinghub Inc',
     author_email='info@scrapinghub.com',
@@ -23,7 +26,6 @@ setup(
     long_description=open('README.rst').read(),
     url='https://github.com/scrapinghub/scrapy-autoextract',
     packages=find_packages(),
-    package_data={'scrapy_autoextract': ['VERSION']},
     keywords='scrapy autoextract middleware',
     classifiers=[
         'Development Status :: 4 - Beta',
