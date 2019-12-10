@@ -204,7 +204,14 @@ class AutoExtractMiddleware(object):
         # The AutoExtract processed item is added here
         autoextract[page_type] = result.get(page_type) or {}
         request.meta['autoextract'] = autoextract
-        return HtmlResponse(url, request=request)
+        page_html = result.pop('html', '<body></body>')
+
+        return HtmlResponse(
+            url,
+            request=request,
+            body=page_html.encode('utf-8'),
+            encoding='utf-8',
+        )
 
     def process_exception(self, request, exception, spider):
         if isinstance(exception, (IgnoreRequest, DropItem)):
