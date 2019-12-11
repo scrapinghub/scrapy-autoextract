@@ -2,6 +2,7 @@ import time
 import json
 import logging
 
+import scrapy
 from scrapy import signals
 from scrapy.http import Headers, HtmlResponse
 from scrapy.utils.python import global_object_name
@@ -13,7 +14,7 @@ from .__version__ import __version__
 logger = logging.getLogger(__name__)
 
 AUTOEXTRACT_META_KEY = '_autoextract_processed'
-USER_AGENT = 'AutoExtract Middleware v{}'.format(__version__)
+USER_AGENT = 'scrapy-autoextract/{} scrapy/{}'.format(__version__, scrapy.__version__)
 SUPPORTED_PAGETYPES = ('article', 'product')
 MAX_ERROR_BODY = 2000
 
