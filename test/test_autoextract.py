@@ -66,6 +66,7 @@ def _assert_enabled(spider,
     assert api_url in out.url
     assert out.meta['autoextract'].get('enabled')
     assert out.headers.get('Authorization') == api_auth
+    assert 'User-Agent' in out.headers
 
     resp = Response(out.url, request=out, body=b'[{}]')
     proc = mw.process_response(out, resp, spider)
@@ -130,3 +131,14 @@ def test_meta_extra():
     assert out is not None
     payload = json.loads(out.body.decode('utf8'))[0]
     assert payload['some'] == 'stuff'
+
+
+def test_meta_headers():
+    config = dict(MW_SETTINGS)
+    mw = _mock_mw(spider, config)
+    meta = deepcopy(AUTOX_META)
+    meta['autoextract']['headers'] = {'UA': 'stuff'}
+    req = Request('http://quotes.toscrape.com', meta=meta)
+    out = mw.process_request(req, spider)
+    assert out is not None
+    assert out.headers['UA'].decode('utf8') == 'stuff'
