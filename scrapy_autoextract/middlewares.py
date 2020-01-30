@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 AUTOEXTRACT_META_KEY = '_autoextract_processed'
 USER_AGENT = 'scrapy-autoextract/{} scrapy/{}'.format(__version__, scrapy.__version__)
-SUPPORTED_PAGETYPES = ('article', 'product')
+SUPPORTED_PAGETYPES = ('article', 'product', 'jobPosting')
 MAX_ERROR_BODY = 2000
 
 
