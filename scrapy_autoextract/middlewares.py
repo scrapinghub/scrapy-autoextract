@@ -258,7 +258,6 @@ class AutoExtractMiddleware(object):
         page_type = request.meta.get('autoextract', {}).get('pageType', self.page_type)
         if not page_type or not isinstance(page_type, str):
             raise AutoExtractConfigError('Invalid pageType value: {}'.format(page_type))
-        page_type = page_type.lower()
         if page_type not in SUPPORTED_PAGETYPES:
             raise AutoExtractConfigError('Invalid pageType value: {}'.format(page_type))
         return page_type
