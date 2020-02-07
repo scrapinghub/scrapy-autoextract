@@ -35,12 +35,15 @@ Configuration
 =============
 
 Add the AutoExtract downloader middleware in the settings file::
-
     DOWNLOADER_MIDDLEWARES = {
         'scrapy_autoextract.AutoExtractMiddleware': 543,
     }
 
 Note that this should be the last downloader middleware to be executed.
+
+You may also want to set a different priority queue, to take some advantage of AutoExtract internals::
+
+SCHEDULER_PRIORITY_QUEUE = 'scrapy.pqueues.DownloaderAwarePriorityQueue'
 
 
 Usage
