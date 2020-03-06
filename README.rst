@@ -63,7 +63,8 @@ Available settings:
   This is required for the AutoExtract classifier to know what kind of page needs to be extracted.
 - `extra` [optional] allows sending extra payload data to your AutoExtract request.
   Must be specified as ``{'autoextract': {'extra': {}}}`` request meta and must be a dict.
-
+- ``AUTOEXTRACT_SLOT_POLICY`` [optional] Download concurrency options. Defaults to ``SlotPolicy.PER_DOMAIN``
+  - If set to ``SlotPolicy.PER_DOMAIN``, then consider setting ``SCHEDULER_PRIORITY_QUEUE = 'scrapy.pqueues.DownloaderAwarePriorityQueue'`` to make better usage of AutoExtract concurrency and avoid delays
 
 Within the spider, consuming the AutoExtract result is as easy as::
 
