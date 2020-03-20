@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 AUTOEXTRACT_META_KEY = '_autoextract_processed'
 USER_AGENT = 'scrapy-autoextract/{} scrapy/{}'.format(__version__, scrapy.__version__)
-SUPPORTED_PAGETYPES = ('article', 'product', 'jobPosting')
 MAX_ERROR_BODY = 2000
 
 
@@ -257,8 +256,6 @@ class AutoExtractMiddleware(object):
         # and fallback to the value from middleware
         page_type = request.meta.get('autoextract', {}).get('pageType', self.page_type)
         if not page_type or not isinstance(page_type, str):
-            raise AutoExtractConfigError('Invalid pageType value: {}'.format(page_type))
-        if page_type not in SUPPORTED_PAGETYPES:
             raise AutoExtractConfigError('Invalid pageType value: {}'.format(page_type))
         return page_type
 
