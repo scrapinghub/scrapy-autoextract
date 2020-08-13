@@ -26,6 +26,13 @@ setup(
     long_description=open('README.rst').read(),
     url='https://github.com/scrapinghub/scrapy-autoextract',
     packages=find_packages(),
+    install_requires=[
+        # FIXME: uncomment after release
+        # 'autoextract-poet',
+        'scrapinghub-autoextract==0.3.0',
+        'scrapy',
+        'scrapy-poet==0.0.3',
+    ],
     keywords='scrapy autoextract middleware',
     classifiers=[
         'Development Status :: 4 - Beta',
