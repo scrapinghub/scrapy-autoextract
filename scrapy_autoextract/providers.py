@@ -9,7 +9,10 @@ from autoextract_poet.page_inputs import (
 from scrapy import Request
 from scrapy.settings import Settings
 from scrapy.statscollectors import StatsCollector
-from scrapy_poet.page_input_providers import PageObjectInputProvider
+from scrapy_poet.page_input_providers import (
+    PageObjectInputProvider,
+    provides,
+)
 
 
 class _Provider(PageObjectInputProvider):
@@ -49,13 +52,13 @@ class _Provider(PageObjectInputProvider):
         return self.provided_class(data=data)
 
 
+@provides(AutoExtractArticleData)
 class ArticleResponseDataProvider(_Provider):
 
     page_type = "article"
-    provided_class = AutoExtractArticleData
 
 
+@provides(AutoExtractProductData)
 class ProductResponseDataProvider(_Provider):
 
     page_type = "product"
-    provided_class = AutoExtractProductData
