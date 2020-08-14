@@ -29,7 +29,7 @@ setup(
     install_requires=[
         # FIXME: uncomment after release
         # 'autoextract-poet',
-        'scrapinghub-autoextract==0.3.0',
+        'scrapinghub-autoextract>=0.3.0',
         'scrapy',
         'scrapy-poet>=0.0.3',
     ],
