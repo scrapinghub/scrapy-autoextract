@@ -53,12 +53,12 @@ class _Provider(PageObjectInputProvider):
 
 
 @provides(AutoExtractArticleData)
-class ArticleResponseDataProvider(_Provider):
+class ArticleDataProvider(_Provider):
 
     page_type = "article"
 
 
 @provides(AutoExtractProductData)
-class ProductResponseDataProvider(_Provider):
+class ProductDataProvider(_Provider):
 
     page_type = "product"
