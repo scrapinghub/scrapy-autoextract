@@ -27,8 +27,8 @@ setup(
     url='https://github.com/scrapinghub/scrapy-autoextract',
     packages=find_packages(),
     install_requires=[
-        # FIXME: uncomment after release
-        # 'autoextract-poet',
+        # FIXME: change from git to pypi after first release
+        'autoextract-poet @ git+ssh://git@github.com/scrapinghub/autoextract-poet.git#egg=autoextract_poet',
         'scrapinghub-autoextract>=0.3.0',
         'scrapy-poet>=0.0.3',
     ],
