@@ -51,17 +51,23 @@ class _Provider(PageObjectInputProvider):
         self.stats.inc_value(f"autoextract/{self.page_type}/success")
         return self.provided_class(data=data)
 
+    @classmethod
+    def register(cls):
+        register(cls, cls.provided_class)
+
 
 class ArticleDataProvider(_Provider):
 
     page_type = "article"
+    provided_class = AutoExtractArticleData
 
 
 class ProductDataProvider(_Provider):
 
     page_type = "product"
+    provided_class = AutoExtractProductData
 
 
 def install():
-    register(ArticleDataProvider, AutoExtractArticleData)
-    register(ProductDataProvider, AutoExtractProductData)
+    ArticleDataProvider.register()
+    ProductDataProvider.register()
