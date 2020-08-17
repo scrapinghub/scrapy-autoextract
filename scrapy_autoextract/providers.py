@@ -11,7 +11,7 @@ from scrapy.settings import Settings
 from scrapy.statscollectors import StatsCollector
 from scrapy_poet.page_input_providers import (
     PageObjectInputProvider,
-    provides,
+    register,
 )
 
 
@@ -52,13 +52,16 @@ class _Provider(PageObjectInputProvider):
         return self.provided_class(data=data)
 
 
-@provides(AutoExtractArticleData)
 class ArticleDataProvider(_Provider):
 
     page_type = "article"
 
 
-@provides(AutoExtractProductData)
 class ProductDataProvider(_Provider):
 
     page_type = "product"
+
+
+def install():
+    register(ArticleDataProvider, AutoExtractArticleData)
+    register(ProductDataProvider, AutoExtractProductData)
