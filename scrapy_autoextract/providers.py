@@ -16,6 +16,11 @@ from scrapy_poet.page_input_providers import (
 
 
 class _Provider(PageObjectInputProvider):
+    """An interface that describes a generic AutoExtract Provider.
+
+    It should not be used publicly as it serves the purpose of being a base
+    class for more specific providers such as Article and Product providers.
+    """
 
     page_type: ClassVar[str]
     provided_class: ClassVar[Optional[Type]]
@@ -26,11 +31,15 @@ class _Provider(PageObjectInputProvider):
             settings: Settings,
             stats: StatsCollector,
     ):
+        """Initialize provider storing its dependencies as attributes."""
         self.request = request
         self.stats = stats
         self.settings = settings
 
     async def __call__(self):
+        """Make an AutoExtract request and build a Page Input of provided class
+        based on API response data.
+        """
         self.stats.inc_value(f"autoextract/{self.page_type}/total")
 
         request = AutoExtractRequest(
@@ -53,6 +62,10 @@ class _Provider(PageObjectInputProvider):
 
     @classmethod
     def register(cls):
+        """Register this provider for its provided class on scrapy-poet
+        registry. This will make it possible to declare provided class as
+        a callback dependency when writing Scrapy spiders.
+        """
         register(cls, cls.provided_class)
 
 
@@ -69,5 +82,6 @@ class ProductDataProvider(_Provider):
 
 
 def install():
+    """Register all providers for their respective provided classes."""
     ArticleDataProvider.register()
     ProductDataProvider.register()
