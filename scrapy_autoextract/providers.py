@@ -22,7 +22,6 @@ class _Provider(PageObjectInputProvider):
     class for more specific providers such as Article and Product providers.
     """
 
-    page_type: ClassVar[str]
     provided_class: ClassVar[Optional[Type]]
 
     def __init__(
@@ -40,11 +39,12 @@ class _Provider(PageObjectInputProvider):
         """Make an AutoExtract request and build a Page Input of provided class
         based on API response data.
         """
-        self.stats.inc_value(f"autoextract/{self.page_type}/total")
+        page_type = self.get_page_type()
+        self.stats.inc_value(f"autoextract/{page_type}/total")
 
         request = AutoExtractRequest(
             url=self.request.url,
-            pageType=self.page_type,
+            pageType=page_type,
         )
 
         try:
@@ -54,10 +54,10 @@ class _Provider(PageObjectInputProvider):
                 max_query_error_retries=3
             )[0]
         except Exception:
-            self.stats.inc_value(f"autoextract/{self.page_type}/error")
+            self.stats.inc_value(f"autoextract/{page_type}/error")
             raise
 
-        self.stats.inc_value(f"autoextract/{self.page_type}/success")
+        self.stats.inc_value(f"autoextract/{page_type}/success")
         return self.provided_class(data=data)
 
     @classmethod
@@ -68,16 +68,21 @@ class _Provider(PageObjectInputProvider):
         """
         register(cls, cls.provided_class)
 
+    @classmethod
+    def get_page_type(cls) -> str:
+        """Page type is defined by the class attribute `item_key` available on
+        `autoextract_poet.page_inputs` classes.
+        """
+        return cls.provided_class.item_key
+
 
 class ArticleDataProvider(_Provider):
 
-    page_type = "article"
     provided_class = AutoExtractArticleData
 
 
 class ProductDataProvider(_Provider):
 
-    page_type = "product"
     provided_class = AutoExtractProductData
 
 
