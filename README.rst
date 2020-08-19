@@ -67,9 +67,9 @@ The providers
 -------------
 
 Another way of consuming AutoExtract API is using the Page Objects pattern
-proposed by the _`web-poet` library and implemented by _`scrapy-poet`.
+proposed by the `web-poet`_ library and implemented by `scrapy-poet`_.
 
-Page Objects their returned Items are defined by the _`autoextract-poet`
+Page Objects their returned Items are defined by the `autoextract-poet`_
 library.
 
 Within the spider, consuming the AutoExtract result is as easy as::
@@ -82,7 +82,7 @@ Within the spider, consuming the AutoExtract result is as easy as::
 Configuration
 ^^^^^^^^^^^^^
 
-Make sure you have _`scrapy-poet` properly configured.
+Make sure you have `scrapy-poet`_ properly configured.
 
 Install the AutoExtract providers in the settings file::
 
