@@ -46,12 +46,16 @@ class _Provider(PageObjectInputProvider):
             url=self.request.url,
             pageType=page_type,
         )
+        api_key = self.settings.get('AUTOEXTRACT_USER')
+        max_query_error_retries = self.settings.getint(
+            'AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES', 3
+        )
 
         try:
             data = await request_raw(
                 [request],
-                api_key=self.settings.get('AUTOEXTRACT_USER'),
-                max_query_error_retries=3
+                api_key=api_key,
+                max_query_error_retries=max_query_error_retries
             )[0]
         except Exception:
             self.stats.inc_value(f"autoextract/{page_type}/error")
