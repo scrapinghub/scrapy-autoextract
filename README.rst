@@ -31,8 +31,29 @@ Installation
 scrapy-autoextract requires Python 3.5+
 
 
+Usage
+=====
+
+There are two different ways to consume the AutoExtract API with this library:
+
+* using our Scrapy middleware
+* using our Page Object providers
+
+The middleware
+--------------
+
+The middleware is opt-in and can be explicitly enabled per request,
+with the ``{'autoextract': {'enabled': True}}`` request meta.
+All the options below can be set either in the project settings file,
+or just for specific spiders, in the ``custom_settings`` dict.
+
+Within the spider, consuming the AutoExtract result is as easy as::
+
+    def parse(self, response):
+        yield response.meta['autoextract']
+
 Configuration
-=============
+^^^^^^^^^^^^^
 
 Add the AutoExtract downloader middleware in the settings file::
 
@@ -42,19 +63,46 @@ Add the AutoExtract downloader middleware in the settings file::
 
 Note that this should be the last downloader middleware to be executed.
 
+The providers
+-------------
 
-Usage
-=====
+Another way of consuming AutoExtract API is using the Page Objects pattern
+proposed by the _`web-poet` library and implemented by _`scrapy-poet`.
 
-The middleware is opt-in and can be explicitly enabled per request,
-with the ``{'autoextract': {'enabled': True}}`` request meta.
-All the options below can be set either in the project settings file,
-or just for specific spiders, in the ``custom_settings`` dict.
+Page Objects their returned Items are defined by the _`autoextract-poet`
+library.
 
-Available settings:
+Within the spider, consuming the AutoExtract result is as easy as::
+
+    from autoextract_poet.page_inputs import AutoExtractArticleData
+
+    def parse(self, response, article: AutoExtractArticleData):
+        yield article.to_item()
+
+Configuration
+^^^^^^^^^^^^^
+
+Make sure you have _`scrapy-poet` properly configured.
+
+Install the AutoExtract providers in the settings file::
+
+    import scrapy_autoextract.providers
+    scrapy_autoextract.providers.install()
+
+Now you should be ready to use our AutoExtract providers.
+
+Settings
+========
+
+Common settings
+---------------
 
 - ``AUTOEXTRACT_USER`` [mandatory] is your AutoExtract API key
 - ``AUTOEXTRACT_URL`` [optional] the AutoExtract service url. Defaults to autoextract.scrapinghub.com.
+
+Middleware settings
+-------------------
+
 - ``AUTOEXTRACT_TIMEOUT`` [optional] sets the response timeout from AutoExtract. Defaults to 660 seconds.
   Can also be defined by setting the "download_timeout" in the request.meta.
 - ``AUTOEXTRACT_PAGE_TYPE`` [mandatory] defines the kind of document to be extracted.
@@ -66,13 +114,11 @@ Available settings:
 - ``AUTOEXTRACT_SLOT_POLICY`` [optional] Download concurrency options. Defaults to ``SlotPolicy.PER_DOMAIN``
   - If set to ``SlotPolicy.PER_DOMAIN``, then consider setting ``SCHEDULER_PRIORITY_QUEUE = 'scrapy.pqueues.DownloaderAwarePriorityQueue'``
   to make better usage of AutoExtract concurrency and avoid delays.
+
+Provider settings
+-----------------
+
 - ``AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES`` [optional] Max number of retries for Query-level errors. Defaults to ``3``.
-
-Within the spider, consuming the AutoExtract result is as easy as::
-
-    def parse(self, response):
-        yield response.meta['autoextract']
-
 
 Limitations
 ===========
@@ -95,3 +141,7 @@ When using the AutoExtract middleware, there are some limitations.
   There is an exception, if there are too many requests sent in
   a short amount of time and AutoExtract returns HTTP code 429.
   For that case it's best to use ``RETRY_HTTP_CODES=[429]``.
+
+.. _`web-poet`: https://github.com/scrapinghub/web-poet
+.. _`scrapy-poet`: https://github.com/scrapinghub/scrapy-poet
+.. _`autoextract-poet`: https://github.com/scrapinghub/autoextract-poet
