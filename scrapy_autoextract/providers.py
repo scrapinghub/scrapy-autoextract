@@ -46,16 +46,17 @@ class _Provider(PageObjectInputProvider):
             url=self.request.url,
             pageType=page_type,
         )
-        api_key = self.settings.get('AUTOEXTRACT_USER')
+        api_key = self.settings.get("AUTOEXTRACT_USER")
+        endpoint = self.settings.get("AUTOEXTRACT_URL")
         max_query_error_retries = self.settings.getint(
-            'AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES', 3
+            "AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES", 3
         )
 
         try:
-            # TODO: customize endpoint through settings
             data = await request_raw(
                 [request],
                 api_key=api_key,
+                endpoint=endpoint,
                 max_query_error_retries=max_query_error_retries
             )[0]
         except Exception:
