@@ -49,7 +49,7 @@ class _Provider(PageObjectInputProvider):
 
         try:
             data = await request_raw(
-                [request.as_dict()],
+                [request],
                 api_key=self.settings.get('AUTOEXTRACT_USER'),
                 max_query_error_retries=3
             )[0]
