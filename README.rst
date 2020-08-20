@@ -82,9 +82,8 @@ Within the spider, consuming the AutoExtract result is as easy as::
 Configuration
 ^^^^^^^^^^^^^
 
-Make sure you have `scrapy-poet`_ properly configured.
-
-Install the AutoExtract providers in the settings file::
+First, you need to configure scrapy-poet as described on `scrapy-poet's documentation`_.
+Then, enable AutoExtract providers by putting the following code to Scrapy's ``settings.py`` file::
 
     import scrapy_autoextract.providers
     scrapy_autoextract.providers.install()
@@ -145,3 +144,4 @@ When using the AutoExtract middleware, there are some limitations.
 .. _`web-poet`: https://github.com/scrapinghub/web-poet
 .. _`scrapy-poet`: https://github.com/scrapinghub/scrapy-poet
 .. _`autoextract-poet`: https://github.com/scrapinghub/autoextract-poet
+.. _`scrapy-poet's documentation` https://scrapy-poet.readthedocs.io/en/latest/intro/tutorial.html#configuring-the-project
