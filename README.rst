@@ -140,8 +140,22 @@ When using the AutoExtract middleware, there are some limitations.
   There is an exception, if there are too many requests sent in
   a short amount of time and AutoExtract returns HTTP code 429.
   For that case it's best to use ``RETRY_HTTP_CODES=[429]``.
+* 429 errors are handled as standard retries when using Scrapy middleware,
+  but they're handled properly and automatically with scrapy-poet integration,
+  as it relies on `scrapinghub-autoextract`_.
+  You may loose some responses with the middleware.
+  With scrapy-poet, there is no need to change ``RETRY_HTTP_CODES``.
+* Overall, retries have a better behavior with scrapy-poet integration
+  and it includes support for automatic Query-level errors retries
+
+When using the AutoExtract providers, be aware that:
+
+* With scrapy-poet integration, retry requests don't go through Scrapy
+* Not all data types are supported with scrapy-poet,
+  currently only Articles and Products are supported
 
 .. _`web-poet`: https://github.com/scrapinghub/web-poet
 .. _`scrapy-poet`: https://github.com/scrapinghub/scrapy-poet
 .. _`autoextract-poet`: https://github.com/scrapinghub/autoextract-poet
+.. _`scrapinghub-autoextract`: https://github.com/scrapinghub/scrapinghub-autoextract
 .. _`scrapy-poet's documentation` https://scrapy-poet.readthedocs.io/en/latest/intro/tutorial.html#configuring-the-project
