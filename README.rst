@@ -79,6 +79,23 @@ Within the spider, consuming the AutoExtract result is as easy as::
     def parse(self, response, article: AutoExtractArticleData):
         yield article.to_item()
 
+Note that on the example above, we're going to perform two requests:
+
+* one goes through Scrapy (it might use Crawlera, Splash or no proxy at all, depending on your configuration)
+* another goes through AutoExtract API using `scrapinghub-autoextract`_
+
+If you don't need the additional request going through Scrapy,
+you can annotate the response argument of your callback with the DummyResponse type.
+This will ignore the Scrapy request and only the AutoExtract API will be fetched.
+
+For example::
+
+    from autoextract_poet.page_inputs import AutoExtractArticleData
+    from scrapy_poet.utils import DummyResponse
+
+    def parse(self, response: DummyResponse, article: AutoExtractArticleData):
+        yield article.to_item()
+
 Configuration
 ^^^^^^^^^^^^^
 
