@@ -28,7 +28,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'autoextract-poet>=0.0.1',
-        'scrapinghub-autoextract>=0.4.0',
+        'scrapinghub-autoextract>=0.5.1',
         'scrapy-poet>=0.0.3',
     ],
     keywords='scrapy autoextract middleware',
