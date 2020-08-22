@@ -58,13 +58,13 @@ class _Provider(PageObjectInputProvider):
                 api_key=api_key,
                 endpoint=endpoint,
                 max_query_error_retries=max_query_error_retries
-            )[0]
+            )
         except Exception:
             self.stats.inc_value(f"autoextract/{page_type}/error")
             raise
 
         self.stats.inc_value(f"autoextract/{page_type}/success")
-        return self.provided_class(data=data)
+        return self.provided_class(data=data[0])
 
     @classmethod
     def register(cls):
