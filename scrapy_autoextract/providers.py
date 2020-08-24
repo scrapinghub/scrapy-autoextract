@@ -1,4 +1,4 @@
-from typing import ClassVar, Optional, Type
+from typing import ClassVar, Type
 
 from autoextract.aio import request_raw
 from autoextract.request import Request as AutoExtractRequest
