@@ -72,7 +72,9 @@ class _Provider(PageObjectInputProvider):
 
         if "error" in data:
             self.stats.inc_value(f"autoextract/{page_type}/error/query")
-            raise QueryLevelError(data["error"])
+            raise QueryLevelError(
+                f"Error '{data['error']}' while processing {self.request}"
+            )
 
         self.stats.inc_value(f"autoextract/{page_type}/success")
         return self.provided_class(data=data)
