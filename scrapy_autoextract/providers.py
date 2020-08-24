@@ -15,6 +15,11 @@ from scrapy_poet.page_input_providers import (
 )
 
 
+class QueryLevelError(Exception):
+
+    pass
+
+
 class _Provider(PageObjectInputProvider):
     """An interface that describes a generic AutoExtract Provider.
 
@@ -53,18 +58,24 @@ class _Provider(PageObjectInputProvider):
         )
 
         try:
-            data = await request_raw(
+            response = await request_raw(
                 [request],
                 api_key=api_key,
                 endpoint=endpoint,
                 max_query_error_retries=max_query_error_retries
             )
         except Exception:
-            self.stats.inc_value(f"autoextract/{page_type}/error")
+            self.stats.inc_value(f"autoextract/{page_type}/error/request")
             raise
 
+        data = response[0]
+
+        if "error" in data:
+            self.stats.inc_value(f"autoextract/{page_type}/error/query")
+            raise QueryLevelError(data["error"])
+
         self.stats.inc_value(f"autoextract/{page_type}/success")
-        return self.provided_class(data=data[0])
+        return self.provided_class(data=data)
 
     @classmethod
     def register(cls):
