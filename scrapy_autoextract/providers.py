@@ -27,7 +27,7 @@ class _Provider(PageObjectInputProvider):
     class for more specific providers such as Article and Product providers.
     """
 
-    provided_class: ClassVar[Type]
+    provided_class: ClassVar[Type]  # needs item_key attr and to_item method
 
     def __init__(
             self,
