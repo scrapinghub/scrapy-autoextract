@@ -122,15 +122,11 @@ Now you should be ready to use our AutoExtract providers.
 Settings
 ========
 
-Common settings
----------------
-
-- ``AUTOEXTRACT_USER`` [mandatory] is your AutoExtract API key
-- ``AUTOEXTRACT_URL`` [optional] the AutoExtract service url. Defaults to autoextract.scrapinghub.com.
-
 Middleware settings
 -------------------
 
+- ``AUTOEXTRACT_USER`` [mandatory] is your AutoExtract API key
+- ``AUTOEXTRACT_URL`` [optional] the AutoExtract service url. Defaults to autoextract.scrapinghub.com.
 - ``AUTOEXTRACT_TIMEOUT`` [optional] sets the response timeout from AutoExtract. Defaults to 660 seconds.
   Can also be defined by setting the "download_timeout" in the request.meta.
 - ``AUTOEXTRACT_PAGE_TYPE`` [mandatory] defines the kind of document to be extracted.
@@ -146,6 +142,8 @@ Middleware settings
 Provider settings
 -----------------
 
+- ``AUTOEXTRACT_USER`` [optional] is your AutoExtract API key. Defaults to ``SCRAPINGHUB_AUTOEXTRACT_KEY`` environment variable.
+- ``AUTOEXTRACT_URL`` [optional] the AutoExtract service url. Defaults to autoextract.scrapinghub.com.
 - ``AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES`` [optional] Max number of retries for Query-level errors. Defaults to ``3``.
 
 Limitations
