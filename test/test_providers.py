@@ -4,6 +4,7 @@ from scrapy_poet.page_input_providers import providers
 from scrapy_autoextract.providers import (
     ArticleDataProvider,
     ProductDataProvider,
+    QueryError,
     install,
 )
 
@@ -34,3 +35,8 @@ def test_install():
 ))
 def test_get_page_type(provider, page_type):
     assert provider.get_page_type() == page_type
+
+
+def test_query_error():
+    exc = QueryError({"foo": "bar"}, "sample error")
+    assert str(exc) == "QueryError: query={'foo': 'bar'}, message='sample error'"

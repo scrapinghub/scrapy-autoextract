@@ -15,9 +15,14 @@ from scrapy_poet.page_input_providers import (
 )
 
 
-class QueryLevelError(Exception):
+class QueryError(Exception):
 
-    pass
+    def __init__(self, query: dict, message: str):
+        self.query = query
+        self.message = message
+
+    def __str__(self):
+        return f"QueryError: query={self.query}, message='{self.message}'"
 
 
 class _Provider(PageObjectInputProvider):
@@ -72,9 +77,7 @@ class _Provider(PageObjectInputProvider):
 
         if "error" in data:
             self.stats.inc_value(f"autoextract/{page_type}/error/query")
-            raise QueryLevelError(
-                f"Error '{data['error']}' while processing {self.request}"
-            )
+            raise QueryError(data["query"], data["error"])
 
         self.stats.inc_value(f"autoextract/{page_type}/success")
         return self.provided_class(data=data)
