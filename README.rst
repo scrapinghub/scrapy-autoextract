@@ -170,7 +170,7 @@ When using the AutoExtract middleware, there are some limitations.
 * 429 errors are handled as standard retries when using Scrapy middleware,
   but they're handled properly and automatically with scrapy-poet integration,
   as it relies on `scrapinghub-autoextract`_.
-  You may loose some responses with the middleware.
+  You may lose some responses with the middleware.
   With scrapy-poet, there is no need to change ``RETRY_HTTP_CODES``.
 * Overall, retries have a better behavior with scrapy-poet integration
   and it includes support for automatic Query-level errors retries
