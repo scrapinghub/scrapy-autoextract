@@ -112,15 +112,21 @@ For example::
 Configuration
 ^^^^^^^^^^^^^
 
-First, you need to configure scrapy-poet as described on `scrapy-poet's documentation`_.
-Then, enable AutoExtract providers by putting the following code to Scrapy's ``settings.py`` file::
+First, you need to configure scrapy-poet as described on `scrapy-poet's documentation`_
+and then enable AutoExtract providers by putting the following code to Scrapy's ``settings.py`` file::
 
     import scrapy_autoextract.providers
     scrapy_autoextract.providers.install()
 
+    DOWNLOADER_MIDDLEWARES = {
+        'scrapy_poet.InjectionMiddleware': 543,
+    }
+
+    TWISTED_REACTOR = 'twisted.internet.asyncioreactor.AsyncioSelectorReactor'
+
 Currently, our providers are implemented using asyncio.
 Scrapy has introduced asyncio support since version 2.0
-but you need to manually enable it by configuring Twisted's default reactor.
+but as of Scrapy 2.3 you need to manually enable it by configuring Twisted's default reactor.
 Check `Scrapy's asyncio documentation`_ for more information.
 
 Checklist:
