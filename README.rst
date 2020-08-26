@@ -113,7 +113,7 @@ For example::
 Configuration
 ^^^^^^^^^^^^^
 
-First, you need to configure scrapy-poet as described on `scrapy-poet\'s documentation`_
+First, you need to configure scrapy-poet as described on `scrapy-poet's documentation`_
 and then enable AutoExtract providers by putting the following code to Scrapy's ``settings.py`` file::
 
     # Install AutoExtract providers
@@ -131,7 +131,7 @@ and then enable AutoExtract providers by putting the following code to Scrapy's 
 Currently, our providers are implemented using asyncio.
 Scrapy has introduced asyncio support since version 2.0
 but as of Scrapy 2.3 you need to manually enable it by configuring Twisted's default reactor.
-Check `Scrapy\'s asyncio documentation`_ for more information.
+Check `Scrapy's asyncio documentation`_ for more information.
 
 Checklist:
 
@@ -251,7 +251,7 @@ When using the AutoExtract providers, be aware that:
 .. _`autoextract-poet`: https://github.com/scrapinghub/autoextract-poet
 .. _`scrapinghub-autoextract`: https://github.com/scrapinghub/scrapinghub-autoextract
 .. _`scrapinghub-autoextract's async errors`: https://github.com/scrapinghub/scrapinghub-autoextract/blob/master/autoextract/aio/errors.py
-.. _`scrapy-poet\'s documentation` https://scrapy-poet.readthedocs.io/en/latest/intro/tutorial.html#configuring-the-project
-.. _`Scrapy\'s asyncio documentation` https://docs.scrapy.org/en/latest/topics/asyncio.html
+.. _`scrapy-poet's documentation` https://scrapy-poet.readthedocs.io/en/latest/intro/tutorial.html#configuring-the-project
+.. _`Scrapy's asyncio documentation` https://docs.scrapy.org/en/latest/topics/asyncio.html
 .. _`Request-level error`: https://doc.scrapinghub.com/autoextract.html#request-level
 .. _`Query-level error`: https://doc.scrapinghub.com/autoextract.html#query-level
