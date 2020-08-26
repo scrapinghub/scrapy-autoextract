@@ -74,10 +74,18 @@ library.
 
 Within the spider, consuming the AutoExtract result is as easy as::
 
+    import scrapy
     from autoextract_poet.page_inputs import AutoExtractArticleData
 
-    def parse(self, response, article: AutoExtractArticleData):
-        yield article.to_item()
+    class SampleSpider(scrapy.Spider):
+
+        name = "sample"
+
+        def parse(self, response, article: AutoExtractArticleData):
+            # We're making two requests here:
+            # - one through Scrapy to build the response argument
+            # - another through providers to build the article argument
+            yield article.to_item()
 
 Note that on the example above, we're going to perform two requests:
 
@@ -85,16 +93,21 @@ Note that on the example above, we're going to perform two requests:
 * another goes through AutoExtract API using `scrapinghub-autoextract`_
 
 If you don't need the additional request going through Scrapy,
-you can annotate the response argument of your callback with the DummyResponse type.
+you can annotate the response argument of your callback with ``DummyResponse``.
 This will ignore the Scrapy request and only the AutoExtract API will be fetched.
 
 For example::
 
+    import scrapy
     from autoextract_poet.page_inputs import AutoExtractArticleData
     from scrapy_poet.utils import DummyResponse
 
-    def parse(self, response: DummyResponse, article: AutoExtractArticleData):
-        yield article.to_item()
+    class SampleSpider(scrapy.Spider):
+
+        name = "sample"
+
+        def parse(self, response: DummyResponse, article: AutoExtractArticleData):
+            yield article.to_item()
 
 Configuration
 ^^^^^^^^^^^^^
