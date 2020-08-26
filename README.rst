@@ -251,7 +251,7 @@ When using the AutoExtract providers, be aware that:
 .. _`autoextract-poet`: https://github.com/scrapinghub/autoextract-poet
 .. _`scrapinghub-autoextract`: https://github.com/scrapinghub/scrapinghub-autoextract
 .. _`scrapinghub-autoextract's async errors`: https://github.com/scrapinghub/scrapinghub-autoextract/blob/master/autoextract/aio/errors.py
-.. _`scrapy-poet's documentation` https://scrapy-poet.readthedocs.io/en/latest/intro/tutorial.html#configuring-the-project
-.. _`Scrapy's asyncio documentation` https://docs.scrapy.org/en/latest/topics/asyncio.html
+.. _`scrapy-poet's documentation`: https://scrapy-poet.readthedocs.io/en/latest/intro/tutorial.html#configuring-the-project
+.. _`Scrapy's asyncio documentation`: https://docs.scrapy.org/en/latest/topics/asyncio.html
 .. _`Request-level error`: https://doc.scrapinghub.com/autoextract.html#request-level
 .. _`Query-level error`: https://doc.scrapinghub.com/autoextract.html#query-level
