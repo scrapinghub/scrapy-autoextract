@@ -107,6 +107,7 @@ For example::
         name = "sample"
 
         def parse(self, response: DummyResponse, article: AutoExtractArticleData):
+            # We're making a single request here to build the article argument
             yield article.to_item()
 
 Configuration
@@ -115,13 +116,16 @@ Configuration
 First, you need to configure scrapy-poet as described on `scrapy-poet's documentation`_
 and then enable AutoExtract providers by putting the following code to Scrapy's ``settings.py`` file::
 
+    # Install AutoExtract providers
     import scrapy_autoextract.providers
     scrapy_autoextract.providers.install()
 
+    # Enable scrapy-poet's provider injection middleware
     DOWNLOADER_MIDDLEWARES = {
         'scrapy_poet.InjectionMiddleware': 543,
     }
 
+    # Configure Twisted's reactor for asyncio support on Scrapy
     TWISTED_REACTOR = 'twisted.internet.asyncioreactor.AsyncioSelectorReactor'
 
 Currently, our providers are implemented using asyncio.
@@ -137,6 +141,52 @@ Checklist:
 * Scrapy's asyncio support is enabled on settings.py
 
 Now you should be ready to use our AutoExtract providers.
+
+Exceptions
+^^^^^^^^^^
+
+While trying to fetch AutoExtract API, providers might raise some exceptions.
+Those exceptions will probably come from `scrapinghub-autoextract`_
+or Tenacity, the library used to implement retries.
+For example:
+
+* ``autoextract.aio.errors.RequestError``: raised when a `Request-level error`_ is returned
+* ``autoextract.aio.errors.QueryRetryError``: raised when it's not possible to retry a `Query-level error`_
+* ``tenacity.RetryError``: raised when it's not possible to retry an error
+
+Check `scrapinghub-autoextract's async errors`_ for exception definitions.
+
+You can capture those exceptions using an error callback (``errback``)::
+
+    import scrapy
+    from autoextract.aio.errors import RequestError, QueryRetryError
+    from tenacity import RetryError
+    from twisted.python.failure import Failure
+
+    class SampleSpider(scrapy.Spider):
+
+        name = "sample"
+        urls = [...]
+
+        def start_requests(self):
+            for url in self.urls:
+                yield scrapy.Request(url, callback=self.parse_article, errback=self.errback_article)
+
+        def parse_article(self, response: DummyResponse, article: AutoExtractArticleData):
+            yield article.to_item()
+
+        def errback_article(self, failure: Failure):
+            if failure.check(RequestError):
+                self.logger.error(f"RequestError on {failure.request.url})
+
+            if failure.check(QueryRetryError):
+                self.logger.error(f"QueryRetryError on {failure.request.url})
+
+            if failure.check(RetryError):
+                self.logger.error(f"RetryError on {failure.request.url})
+
+See `Scrapy documentation <https://docs.scrapy.org/en/latest/topics/request-response.html#using-errbacks-to-catch-exceptions-in-request-processing>`_
+for more details on how to capture exceptions using request's errback.
 
 Settings
 ========
@@ -200,5 +250,8 @@ When using the AutoExtract providers, be aware that:
 .. _`scrapy-poet`: https://github.com/scrapinghub/scrapy-poet
 .. _`autoextract-poet`: https://github.com/scrapinghub/autoextract-poet
 .. _`scrapinghub-autoextract`: https://github.com/scrapinghub/scrapinghub-autoextract
+.. _`scrapinghub-autoextract's async errors`: https://github.com/scrapinghub/scrapinghub-autoextract/blob/master/autoextract/aio/errors.py
 .. _`scrapy-poet's documentation` https://scrapy-poet.readthedocs.io/en/latest/intro/tutorial.html#configuring-the-project
 .. _`Scrapy's asyncio documentation` https://docs.scrapy.org/en/latest/topics/asyncio.html
+.. _`Request-level error`: https://doc.scrapinghub.com/autoextract.html#request-level
+.. _`Query-level error`: https://doc.scrapinghub.com/autoextract.html#query-level
