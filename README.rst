@@ -150,7 +150,6 @@ Those exceptions might come from scrapy-autoextract providers themselves,
 `scrapinghub-autoextract`_, or Tenacity, the library used to implement retries.
 For example:
 
-* ``scrapy_poet.providers.QueryError``: raised when a `Query-level error`_ is returned even after retrying the request
 * ``autoextract.aio.errors.RequestError``: raised when a `Request-level error`_ is returned
 * ``autoextract.aio.errors.QueryRetryError``: raised when it's not possible to retry a `Query-level error`_
 * ``tenacity.RetryError``: raised when it's not possible to retry an error
