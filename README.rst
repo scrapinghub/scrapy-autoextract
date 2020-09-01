@@ -227,7 +227,6 @@ When using the AutoExtract middleware, there are some limitations.
   so it's best to use ``AUTHTHROTTLE_ENABLED=False`` in the settings.
 * Redirects are handled by AutoExtract, not by Scrapy,
   so these kinds of middlewares might have no effect
-* AutoExtract doesn't handle retries internally, they should be handled by its clients.
 * 429 errors could be handled as standard retries when using Scrapy middleware,
   but they're handled properly and automatically with scrapy-poet integration,
   as it relies on `scrapinghub-autoextract`_.
