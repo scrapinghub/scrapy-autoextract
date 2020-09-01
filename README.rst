@@ -28,11 +28,32 @@ Installation
 
     pip install scrapy-autoextract
 
-scrapy-autoextract requires Python 3.5+
+scrapy-autoextract requires Python 3.6+
 
+
+Usage
+=====
+
+There are two different ways to consume the AutoExtract API with this library:
+
+* using our Scrapy middleware
+* using our Page Object providers
+
+The middleware
+--------------
+
+The middleware is opt-in and can be explicitly enabled per request,
+with the ``{'autoextract': {'enabled': True}}`` request meta.
+All the options below can be set either in the project settings file,
+or just for specific spiders, in the ``custom_settings`` dict.
+
+Within the spider, consuming the AutoExtract result is as easy as::
+
+    def parse(self, response):
+        yield response.meta['autoextract']
 
 Configuration
-=============
+^^^^^^^^^^^^^
 
 Add the AutoExtract downloader middleware in the settings file::
 
@@ -42,16 +63,132 @@ Add the AutoExtract downloader middleware in the settings file::
 
 Note that this should be the last downloader middleware to be executed.
 
+The providers
+-------------
 
-Usage
-=====
+Another way of consuming AutoExtract API is using the Page Objects pattern
+proposed by the `web-poet`_ library and implemented by `scrapy-poet`_.
 
-The middleware is opt-in and can be explicitly enabled per request,
-with the ``{'autoextract': {'enabled': True}}`` request meta.
-All the options below can be set either in the project settings file,
-or just for specific spiders, in the ``custom_settings`` dict.
+Page Objects their returned Items are defined by the `autoextract-poet`_
+library.
 
-Available settings:
+Within the spider, consuming the AutoExtract result is as easy as::
+
+    import scrapy
+    from autoextract_poet.page_inputs import AutoExtractArticleData
+
+    class SampleSpider(scrapy.Spider):
+
+        name = "sample"
+
+        def parse(self, response, article: AutoExtractArticleData):
+            # We're making two requests here:
+            # - one through Scrapy to build the response argument
+            # - another through providers to build the article argument
+            yield article.to_item()
+
+Note that on the example above, we're going to perform two requests:
+
+* one goes through Scrapy (it might use Crawlera, Splash or no proxy at all, depending on your configuration)
+* another goes through AutoExtract API using `scrapinghub-autoextract`_
+
+If you don't need the additional request going through Scrapy,
+you can annotate the response argument of your callback with ``DummyResponse``.
+This will ignore the Scrapy request and only the AutoExtract API will be fetched.
+
+For example::
+
+    import scrapy
+    from autoextract_poet.page_inputs import AutoExtractArticleData
+    from scrapy_poet.utils import DummyResponse
+
+    class SampleSpider(scrapy.Spider):
+
+        name = "sample"
+
+        def parse(self, response: DummyResponse, article: AutoExtractArticleData):
+            # We're making a single request here to build the article argument
+            yield article.to_item()
+
+Configuration
+^^^^^^^^^^^^^
+
+First, you need to configure scrapy-poet as described on `scrapy-poet's documentation`_
+and then enable AutoExtract providers by putting the following code to Scrapy's ``settings.py`` file::
+
+    # Install AutoExtract providers
+    import scrapy_autoextract.providers
+    scrapy_autoextract.providers.install()
+
+    # Enable scrapy-poet's provider injection middleware
+    DOWNLOADER_MIDDLEWARES = {
+        'scrapy_poet.InjectionMiddleware': 543,
+    }
+
+    # Configure Twisted's reactor for asyncio support on Scrapy
+    TWISTED_REACTOR = 'twisted.internet.asyncioreactor.AsyncioSelectorReactor'
+
+Currently, our providers are implemented using asyncio.
+Scrapy has introduced asyncio support since version 2.0
+but as of Scrapy 2.3 you need to manually enable it by configuring Twisted's default reactor.
+Check `Scrapy's asyncio documentation`_ for more information.
+
+Checklist:
+
+* scrapy-poet is installed and downloader/injector middleware is configured
+* autoextract-poet is installed (page inputs are imported from this lib)
+* providers are installed on settings.py
+* Scrapy's asyncio support is enabled on settings.py
+
+Now you should be ready to use our AutoExtract providers.
+
+Exceptions
+^^^^^^^^^^
+
+While trying to fetch AutoExtract API, providers might raise some exceptions.
+Those exceptions might come from scrapy-autoextract providers themselves,
+`scrapinghub-autoextract`_, or Tenacity, the library used to implement retries.
+For example:
+
+* ``autoextract.aio.errors.RequestError``: raised when a `Request-level error`_ is returned
+* ``tenacity.RetryError``: raised when an error persists even after the retrials
+
+Check `scrapinghub-autoextract's async errors`_ for exception definitions.
+
+You can capture those exceptions using an error callback (``errback``)::
+
+    import scrapy
+    from autoextract.aio.errors import RequestError, QueryRetryError
+    from tenacity import RetryError
+    from twisted.python.failure import Failure
+
+    class SampleSpider(scrapy.Spider):
+
+        name = "sample"
+        urls = [...]
+
+        def start_requests(self):
+            for url in self.urls:
+                yield scrapy.Request(url, callback=self.parse_article, errback=self.errback_article)
+
+        def parse_article(self, response: DummyResponse, article: AutoExtractArticleData):
+            yield article.to_item()
+
+        def errback_article(self, failure: Failure):
+            if failure.check(RequestError):
+                self.logger.error(f"RequestError on {failure.request.url})
+
+            if failure.check(RetryError):
+                self.logger.error(f"RetryError on {failure.request.url})
+
+See `Scrapy documentation <https://docs.scrapy.org/en/latest/topics/request-response.html#using-errbacks-to-catch-exceptions-in-request-processing>`_
+for more details on how to capture exceptions using request's errback.
+
+Settings
+========
+
+Middleware settings
+-------------------
 
 - ``AUTOEXTRACT_USER`` [mandatory] is your AutoExtract API key
 - ``AUTOEXTRACT_URL`` [optional] the AutoExtract service url. Defaults to autoextract.scrapinghub.com.
@@ -67,11 +204,12 @@ Available settings:
   - If set to ``SlotPolicy.PER_DOMAIN``, then consider setting ``SCHEDULER_PRIORITY_QUEUE = 'scrapy.pqueues.DownloaderAwarePriorityQueue'``
   to make better usage of AutoExtract concurrency and avoid delays.
 
-Within the spider, consuming the AutoExtract result is as easy as::
+Provider settings
+-----------------
 
-    def parse(self, response):
-        yield response.meta['autoextract']
-
+- ``AUTOEXTRACT_USER`` [optional] is your AutoExtract API key. Defaults to ``SCRAPINGHUB_AUTOEXTRACT_KEY`` environment variable.
+- ``AUTOEXTRACT_URL`` [optional] the AutoExtract service url. Defaults to the official AutoExtract endpoint.
+- ``AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES`` [optional] Max number of retries for Query-level errors. Defaults to ``3``.
 
 Limitations
 ===========
@@ -89,8 +227,26 @@ When using the AutoExtract middleware, there are some limitations.
   so it's best to use ``AUTHTHROTTLE_ENABLED=False`` in the settings.
 * Redirects are handled by AutoExtract, not by Scrapy,
   so these kinds of middlewares might have no effect
-* Retries should be disabled, because AutoExtract handles them internally
-  (use ``RETRY_ENABLED=False`` in the settings)
-  There is an exception, if there are too many requests sent in
-  a short amount of time and AutoExtract returns HTTP code 429.
-  For that case it's best to use ``RETRY_HTTP_CODES=[429]``.
+* 429 errors could be handled as standard retries when using Scrapy middleware,
+  but they're handled properly and automatically with scrapy-poet integration,
+  as it relies on `scrapinghub-autoextract`_.
+  You may lose some responses with the middleware approach.
+* Overall, retries have a better behavior with scrapy-poet integration
+  and it includes support for automatic Query-level errors retries with
+  no need to change ``RETRY_HTTP_CODES``.
+
+When using the AutoExtract providers, be aware that:
+
+* With scrapy-poet integration, retry requests don't go through Scrapy
+* Not all data types are supported with scrapy-poet,
+  currently only Articles and Products are supported
+
+.. _`web-poet`: https://github.com/scrapinghub/web-poet
+.. _`scrapy-poet`: https://github.com/scrapinghub/scrapy-poet
+.. _`autoextract-poet`: https://github.com/scrapinghub/autoextract-poet
+.. _`scrapinghub-autoextract`: https://github.com/scrapinghub/scrapinghub-autoextract
+.. _`scrapinghub-autoextract's async errors`: https://github.com/scrapinghub/scrapinghub-autoextract/blob/master/autoextract/aio/errors.py
+.. _`scrapy-poet's documentation`: https://scrapy-poet.readthedocs.io/en/latest/intro/tutorial.html#configuring-the-project
+.. _`Scrapy's asyncio documentation`: https://docs.scrapy.org/en/latest/topics/asyncio.html
+.. _`Request-level error`: https://doc.scrapinghub.com/autoextract.html#request-level
+.. _`Query-level error`: https://doc.scrapinghub.com/autoextract.html#query-level

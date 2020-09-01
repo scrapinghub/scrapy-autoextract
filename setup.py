@@ -26,6 +26,11 @@ setup(
     long_description=open('README.rst').read(),
     url='https://github.com/scrapinghub/scrapy-autoextract',
     packages=find_packages(),
+    install_requires=[
+        'autoextract-poet>=0.0.1',
+        'scrapinghub-autoextract>=0.5.1',
+        'scrapy-poet>=0.0.3',
+    ],
     keywords='scrapy autoextract middleware',
     classifiers=[
         'Development Status :: 4 - Beta',
@@ -35,9 +40,9 @@ setup(
         'Operating System :: OS Independent',
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python :: 3 :: Only',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Framework :: Scrapy',
     ],
 )
