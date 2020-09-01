@@ -178,9 +178,6 @@ You can capture those exceptions using an error callback (``errback``)::
             if failure.check(RequestError):
                 self.logger.error(f"RequestError on {failure.request.url})
 
-            if failure.check(QueryRetryError):
-                self.logger.error(f"QueryRetryError on {failure.request.url})
-
             if failure.check(RetryError):
                 self.logger.error(f"RetryError on {failure.request.url})
 
