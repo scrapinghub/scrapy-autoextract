@@ -151,7 +151,6 @@ Those exceptions might come from scrapy-autoextract providers themselves,
 For example:
 
 * ``autoextract.aio.errors.RequestError``: raised when a `Request-level error`_ is returned
-* ``autoextract.aio.errors.QueryRetryError``: raised when it's not possible to retry a `Query-level error`_
 * ``tenacity.RetryError``: raised when it's not possible to retry a generic error
 
 Check `scrapinghub-autoextract's async errors`_ for exception definitions.
