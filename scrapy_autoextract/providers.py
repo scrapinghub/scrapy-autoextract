@@ -1,3 +1,4 @@
+import asyncio
 from typing import ClassVar, Type
 
 from autoextract.aio import request_raw
@@ -16,6 +17,8 @@ from scrapy_poet.page_input_providers import (
 )
 
 AUTOEXTRACT_EXTRA_KEY = "__autoextract_extra"
+AUTOEXTRACT_PROVIDERS_KEY = "__autoextract_providers"
+AUTOEXTRACT_RESPONSE_KEY = "__autoextract_response"
 
 
 class QueryError(Exception):
@@ -48,42 +51,26 @@ class _Provider(PageObjectInputProvider):
         self.stats = stats
         self.settings = settings
 
+    def __before__(self):
+        self.providers.append(self)
+
     async def __call__(self):
         """Make an AutoExtract request and build a Page Input of provided class
         based on API response data.
         """
-        page_type = self.get_page_type()
-        self.stats.inc_value(f"autoextract/{page_type}/total")
-
-        request = AutoExtractRequest(
-            url=self.request.url,
-            pageType=page_type,
-            extra=self.extra,
-        )
-        api_key = self.settings.get("AUTOEXTRACT_USER")
-        endpoint = self.settings.get("AUTOEXTRACT_URL")
-        max_query_error_retries = self.settings.getint(
-            "AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES", 3
-        )
-
         try:
-            response = await request_raw(
-                [request],
-                api_key=api_key,
-                endpoint=endpoint,
-                max_query_error_retries=max_query_error_retries
-            )
-        except Exception:
-            self.stats.inc_value(f"autoextract/{page_type}/error/request")
-            raise
+            if self.providers[-1] is self:
+                await self._fetch_data()
+        except IndexError:
+            # FIXME: it's not possible to use this alone yet
+            raise Exception("AutoExtractHTMLData should not be used alone")
 
-        data = response[0]
+        data = await self._await_data()
 
         if "error" in data:
-            self.stats.inc_value(f"autoextract/{page_type}/error/query")
+            self.stats.inc_value("autoextract/error/query")
             raise QueryError(data["query"], data["error"])
 
-        self.stats.inc_value(f"autoextract/{page_type}/success")
         return self.provided_class(data=data)
 
     @classmethod
@@ -113,6 +100,67 @@ class _Provider(PageObjectInputProvider):
         This value can be shared across different AutoExtract providers.
         """
         setattr(self.request, AUTOEXTRACT_EXTRA_KEY, value)
+
+    @property
+    def providers(self):
+        """Get AutoExtract providers stored on Scrapy's Request."""
+        providers = getattr(self.request, AUTOEXTRACT_PROVIDERS_KEY, None)
+        if providers is None:
+            providers = list()
+            setattr(self.request, AUTOEXTRACT_PROVIDERS_KEY, providers)
+
+        return providers
+
+    @property
+    def response(self):
+        """Get AutoExtract response stored on Scrapy's Request."""
+        return getattr(self.request, AUTOEXTRACT_RESPONSE_KEY, None)
+
+    @response.setter
+    def response(self, value):
+        """Set AutoExtract response on Scrapy's Request.
+
+        This value can be shared across different AutoExtract providers.
+        """
+        setattr(self.request, AUTOEXTRACT_RESPONSE_KEY, value)
+
+    async def _fetch_data(self):
+        self.stats.inc_value("autoextract/total")
+
+        request = AutoExtractRequest(
+            url=self.request.url,
+            pageType=self.get_page_type(),
+            extra=self.extra,
+        )
+
+        api_key = self.settings.get("AUTOEXTRACT_USER")
+        endpoint = self.settings.get("AUTOEXTRACT_URL")
+        max_query_error_retries = self.settings.getint(
+            "AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES", 3
+        )
+
+        try:
+            response = await request_raw(
+                [request],
+                api_key=api_key,
+                endpoint=endpoint,
+                max_query_error_retries=max_query_error_retries
+            )
+        except Exception:
+            self.stats.inc_value("autoextract/error/request")
+            raise
+
+        self.stats.inc_value("autoextract/success")
+        self.response = response
+
+    async def _await_data(self):
+        response = None
+        while response is None:
+            response = self.response
+            await asyncio.sleep(0.2)
+
+        data = response[0]
+        return data
 
 
 class HTMLDataProvider(_Provider):
