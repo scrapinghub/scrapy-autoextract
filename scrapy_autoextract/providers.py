@@ -3,6 +3,7 @@ from typing import ClassVar, Type
 from autoextract.aio import request_raw
 from autoextract.request import Request as AutoExtractRequest
 from autoextract_poet.page_inputs import (
+    AutoExtractHTMLData,
     AutoExtractArticleData,
     AutoExtractProductData,
 )
@@ -13,6 +14,8 @@ from scrapy_poet.page_input_providers import (
     PageObjectInputProvider,
     register,
 )
+
+AUTOEXTRACT_EXTRA_KEY = "__autoextract_extra"
 
 
 class QueryError(Exception):
@@ -55,6 +58,7 @@ class _Provider(PageObjectInputProvider):
         request = AutoExtractRequest(
             url=self.request.url,
             pageType=page_type,
+            extra=self.extra,
         )
         api_key = self.settings.get("AUTOEXTRACT_USER")
         endpoint = self.settings.get("AUTOEXTRACT_URL")
@@ -97,6 +101,49 @@ class _Provider(PageObjectInputProvider):
         """
         return cls.provided_class.item_key
 
+    @property
+    def extra(self):
+        """Get AutoExtract extra parameters stored on Scrapy's Request."""
+        return getattr(self.request, AUTOEXTRACT_EXTRA_KEY, {})
+
+    @extra.setter
+    def extra(self, value):
+        """Set AutoExtract extra parameters on Scrapy's Request.
+
+        This value can be shared across different AutoExtract providers.
+        """
+        setattr(self.request, AUTOEXTRACT_EXTRA_KEY, value)
+
+
+class HTMLDataProvider(_Provider):
+
+    provided_class = AutoExtractHTMLData
+
+    def __before__(self):
+        self.extra = {
+            self.html_argument: True,
+        }
+
+    @property
+    def html_argument(self):
+        """Argument name used by AutoExtract to specify if a request should
+        also return HTML data on its response.
+
+        By default, AutoExtract names this argument as "fullHtml".
+
+        You can override this argument name by defining the
+        ``AUTOEXTRACT_HTML_ARGUMENT`` string in your Scrapy settings.
+
+        Why would you like to change this argument name?
+
+        Currently, production servers are supposed to work with the "fullHtml"
+        argument only. You might want to change this argument name when
+        experimenting with stating/development servers, when a custom argument
+        could be used to force a certain browser stack to be used when
+        rendering HTML content and stuff like that.
+        """
+        return self.settings.get("AUTOEXTRACT_HTML_ARGUMENT", "fullHtml")
+
 
 class ArticleDataProvider(_Provider):
 
@@ -110,5 +157,6 @@ class ProductDataProvider(_Provider):
 
 def install():
     """Register all providers for their respective provided classes."""
+    HTMLDataProvider.register()
     ArticleDataProvider.register()
     ProductDataProvider.register()
