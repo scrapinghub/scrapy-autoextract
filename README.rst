@@ -210,6 +210,8 @@ Provider settings
 - ``AUTOEXTRACT_USER`` [optional] is your AutoExtract API key. Defaults to ``SCRAPINGHUB_AUTOEXTRACT_KEY`` environment variable.
 - ``AUTOEXTRACT_URL`` [optional] the AutoExtract service url. Defaults to the official AutoExtract endpoint.
 - ``AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES`` [optional] Max number of retries for Query-level errors. Defaults to ``3``.
+- ``AUTOEXTRACT_HTML_ARGUMENT`` [optional] Argument name used to specify if a request should return HTML data on its response.
+  By default, AutoExtract names this argument as "fullHtml". Probably, should not be set in production environments.
 
 Limitations
 ===========
