@@ -1,4 +1,3 @@
-import asyncio
 from typing import ClassVar, Type
 
 from autoextract.aio import request_raw
@@ -15,10 +14,6 @@ from scrapy_poet.page_input_providers import (
     PageObjectInputProvider,
     register,
 )
-
-AUTOEXTRACT_EXTRA_KEY = "__autoextract_extra"
-AUTOEXTRACT_PROVIDERS_KEY = "__autoextract_providers"
-AUTOEXTRACT_RESPONSE_KEY = "__autoextract_response"
 
 
 class QueryError(Exception):
@@ -52,21 +47,14 @@ class _Provider(PageObjectInputProvider):
         self.settings = settings
 
     def __before__(self):
-        self.providers.append(self)
+        providers = self.request.meta.get("_autoextract_providers", [])
+        self.request.meta["_autoextract_providers"] = providers + [self]
 
     async def __call__(self):
         """Make an AutoExtract request and build a Page Input of provided class
         based on API response data.
         """
-        try:
-            if self.providers[-1] is self:
-                await self._fetch_data()
-        except IndexError:
-            # FIXME: it's not possible to use this alone yet
-            raise Exception("AutoExtractHTMLData should not be used alone")
-
-        data = await self._await_data()
-
+        data = await self._fetch_data()
         if "error" in data:
             self.stats.inc_value("autoextract/error/query")
             raise QueryError(data["query"], data["error"])
@@ -81,56 +69,31 @@ class _Provider(PageObjectInputProvider):
         """
         register(cls, cls.provided_class)
 
-    @classmethod
-    def get_page_type(cls) -> str:
-        """Page type is defined by the class attribute `item_key` available on
-        `autoextract_poet.page_inputs` classes.
-        """
-        return cls.provided_class.item_key
-
-    @property
-    def extra(self):
-        """Get AutoExtract extra parameters stored on Scrapy's Request."""
-        return getattr(self.request, AUTOEXTRACT_EXTRA_KEY, {})
-
-    @extra.setter
-    def extra(self, value):
-        """Set AutoExtract extra parameters on Scrapy's Request.
-
-        This value can be shared across different AutoExtract providers.
-        """
-        setattr(self.request, AUTOEXTRACT_EXTRA_KEY, value)
-
-    @property
-    def providers(self):
-        """Get AutoExtract providers stored on Scrapy's Request."""
-        providers = getattr(self.request, AUTOEXTRACT_PROVIDERS_KEY, None)
-        if providers is None:
-            providers = list()
-            setattr(self.request, AUTOEXTRACT_PROVIDERS_KEY, providers)
-
-        return providers
-
-    @property
-    def response(self):
-        """Get AutoExtract response stored on Scrapy's Request."""
-        return getattr(self.request, AUTOEXTRACT_RESPONSE_KEY, None)
-
-    @response.setter
-    def response(self, value):
-        """Set AutoExtract response on Scrapy's Request.
-
-        This value can be shared across different AutoExtract providers.
-        """
-        setattr(self.request, AUTOEXTRACT_RESPONSE_KEY, value)
-
     async def _fetch_data(self):
+        page_type = self.provided_class.item_key
+
+        # When the backend includes support for multiple page types in a single
+        # request, we'll be able to remove this condition and always try to
+        # return the cached data on request's meta.
+        if page_type == "html":
+            # Retrieve cached data on request's meta
+            data = self.request.meta.get("_autoextract_data")
+            if data is not None:
+                return data
+
+        # When backend includes support for "html" page type, we'll be able to
+        # remove this condition.
+        if page_type == "html":
+            # There's no support on the backed for an "html" page type yet,
+            # so let's use a dummy page type here
+            page_type = "article"
+
         self.stats.inc_value("autoextract/total")
 
         request = AutoExtractRequest(
             url=self.request.url,
-            pageType=self.get_page_type(),
-            extra=self.extra,
+            pageType=page_type,
+            extra=self.request.meta.get("_autoextract_extra"),
         )
 
         api_key = self.settings.get("AUTOEXTRACT_USER")
@@ -150,16 +113,9 @@ class _Provider(PageObjectInputProvider):
             self.stats.inc_value("autoextract/error/request")
             raise
 
-        self.stats.inc_value("autoextract/success")
-        self.response = response
-
-    async def _await_data(self):
-        response = None
-        while response is None:
-            response = self.response
-            await asyncio.sleep(0.2)
-
         data = response[0]
+        self.stats.inc_value("autoextract/success")
+        self.request.meta["_autoextract_data"] = data
         return data
 
 
@@ -168,9 +124,12 @@ class HTMLDataProvider(_Provider):
     provided_class = AutoExtractHTMLData
 
     def __before__(self):
-        self.extra = {
+        super().__before__()
+        extra = self.request.meta.get("_autoextract_extra", {})
+        extra.update({
             self.html_argument: True,
-        }
+        })
+        self.request.meta["_autoextract_extra"] = extra
 
     @property
     def html_argument(self):
