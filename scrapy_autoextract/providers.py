@@ -1,18 +1,15 @@
-from typing import ClassVar, Type
+from typing import Callable, Dict, Set, Any, ClassVar, Type
 
 from autoextract.aio import request_raw
 from autoextract.request import Request as AutoExtractRequest
 from autoextract_poet.page_inputs import (
     AutoExtractArticleData,
-    AutoExtractProductData,
+    AutoExtractProductData, AutoExtractData, AutoExtractHtml,
 )
-from scrapy import Request
-from scrapy.settings import Settings
+from scrapy import Request as ScrapyRequest
+from scrapy.crawler import Crawler
 from scrapy.statscollectors import StatsCollector
-from scrapy_poet.page_input_providers import (
-    PageObjectInputProvider,
-    register,
-)
+from scrapy_poet.page_input_providers import PageObjectInputProvider
 
 
 class QueryError(Exception):
@@ -27,88 +24,73 @@ class QueryError(Exception):
 
 class _Provider(PageObjectInputProvider):
     """An interface that describes a generic AutoExtract Provider.
-
     It should not be used publicly as it serves the purpose of being a base
     class for more specific providers such as Article and Product providers.
     """
+    page_type_class: ClassVar[Type]
 
-    provided_class: ClassVar[Type]  # needs item_key attr and to_item method
+    @classmethod
+    def provided_classes(cls, type_ :Callable) -> bool:
+        return type_ in (cls.page_type_class, AutoExtractHtml)
 
-    def __init__(
-            self,
-            request: Request,
-            settings: Settings,
-            stats: StatsCollector,
-    ):
+    def __init__(self, crawler: Crawler):
         """Initialize provider storing its dependencies as attributes."""
-        self.request = request
-        self.stats = stats
-        self.settings = settings
+        settings = crawler.spider.settings
+        self.common_request_kwargs = dict(
+            api_key=settings.get("AUTOEXTRACT_USER"),
+            endpoint = settings.get("AUTOEXTRACT_URL"),
+            max_query_error_retries = settings.getint(
+                "AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES", 3)
+        )
 
-    async def __call__(self):
+    async def do_request(self, *args, **kwargs):
+        return await request_raw(*args, **kwargs)
+
+    async def __call__(self,
+                       to_provide: Set[Callable],
+                       request: ScrapyRequest,
+                       stats: StatsCollector
+                       ) -> Dict[Callable, Any]:
         """Make an AutoExtract request and build a Page Input of provided class
         based on API response data.
         """
-        page_type = self.get_page_type()
-        self.stats.inc_value(f"autoextract/{page_type}/total")
+        for cls in to_provide:
+            if issubclass(cls, AutoExtractData):
+                page_type = cls.item_key
+                stats.inc_value(f"autoextract/{page_type}/total")
 
-        request = AutoExtractRequest(
-            url=self.request.url,
-            pageType=page_type,
-        )
-        api_key = self.settings.get("AUTOEXTRACT_USER")
-        endpoint = self.settings.get("AUTOEXTRACT_URL")
-        max_query_error_retries = self.settings.getint(
-            "AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES", 3
-        )
+                request = AutoExtractRequest(
+                    url=request.url,
+                    pageType=page_type,
+                )
+                try:
+                    response = await self.do_request(**{
+                        'query': [request],
+                        **self.common_request_kwargs
+                    })
+                except Exception:
+                    stats.inc_value(f"autoextract/{page_type}/error/request")
+                    raise
 
-        try:
-            response = await request_raw(
-                [request],
-                api_key=api_key,
-                endpoint=endpoint,
-                max_query_error_retries=max_query_error_retries
-            )
-        except Exception:
-            self.stats.inc_value(f"autoextract/{page_type}/error/request")
-            raise
+                data = response[0]
 
-        data = response[0]
+                if "error" in data:
+                    stats.inc_value(f"autoextract/{page_type}/error/query")
+                    raise QueryError(data["query"], data["error"])
 
-        if "error" in data:
-            self.stats.inc_value(f"autoextract/{page_type}/error/query")
-            raise QueryError(data["query"], data["error"])
-
-        self.stats.inc_value(f"autoextract/{page_type}/success")
-        return self.provided_class(data=data)
-
-    @classmethod
-    def register(cls):
-        """Register this provider for its provided class on scrapy-poet
-        registry. This will make it possible to declare provided class as
-        a callback dependency when writing Scrapy spiders.
-        """
-        register(cls, cls.provided_class)
-
-    @classmethod
-    def get_page_type(cls) -> str:
-        """Page type is defined by the class attribute `item_key` available on
-        `autoextract_poet.page_inputs` classes.
-        """
-        return cls.provided_class.item_key
+                stats.inc_value(f"autoextract/{page_type}/success")
+                return {cls: cls(data=data)}
+            elif cls is AutoExtractHtml:
+                raise NotImplemented()
+            else:
+                raise RuntimeError(
+                    f"Unexpected {cls} requested. Probably a bug in the provider "
+                    f"or in scrapy-poet itself")
 
 
 class ArticleDataProvider(_Provider):
-
-    provided_class = AutoExtractArticleData
+    page_type_class = AutoExtractArticleData
 
 
 class ProductDataProvider(_Provider):
-
-    provided_class = AutoExtractProductData
-
-
-def install():
-    """Register all providers for their respective provided classes."""
-    ArticleDataProvider.register()
-    ProductDataProvider.register()
+    page_type_class = AutoExtractProductData
