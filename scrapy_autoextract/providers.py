@@ -1,3 +1,4 @@
+import inspect
 from typing import Callable, Dict, Set, Any, ClassVar, Type
 
 from autoextract.aio import request_raw
@@ -22,7 +23,7 @@ class QueryError(Exception):
         return f"QueryError: query={self.query}, message='{self.message}'"
 
 
-class _Provider(PageObjectInputProvider):
+class AutoExtractProvider(PageObjectInputProvider):
     """An interface that describes a generic AutoExtract Provider.
     It should not be used publicly as it serves the purpose of being a base
     class for more specific providers such as Article and Product providers.
@@ -31,7 +32,8 @@ class _Provider(PageObjectInputProvider):
 
     @classmethod
     def provided_classes(cls, type_ :Callable) -> bool:
-        return type_ in (cls.page_type_class, AutoExtractHtml)
+        return (inspect.isclass(type_) and
+                issubclass(type_, (AutoExtractData, AutoExtractHtml)))
 
     def __init__(self, crawler: Crawler):
         """Initialize provider storing its dependencies as attributes."""
@@ -89,11 +91,3 @@ class _Provider(PageObjectInputProvider):
                     "or in scrapy-poet itself")
 
         return instances
-
-
-class ArticleDataProvider(_Provider):
-    page_type_class = AutoExtractArticleData
-
-
-class ProductDataProvider(_Provider):
-    page_type_class = AutoExtractProductData

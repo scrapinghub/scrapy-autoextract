@@ -1,17 +1,16 @@
 import pytest
 
 from autoextract_poet import AutoExtractArticleData, AutoExtractProductData
+from autoextract_poet.page_inputs import AutoExtractData
 from scrapy_autoextract.providers import (
-    ArticleDataProvider,
-    ProductDataProvider,
-    QueryError, _Provider,
+    QueryError, AutoExtractProvider,
 )
 from scrapy_poet.injection import get_injector_for_testing, \
     get_response_for_testing
 
-PROVIDERS = (
-    ArticleDataProvider,
-    ProductDataProvider,
+DATA_INPUTS = (
+    AutoExtractArticleData,
+    AutoExtractProductData,
 )
 
 
@@ -23,19 +22,18 @@ def test_query_error():
 class TestProviders:
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("provider_cls", PROVIDERS)
-    async def test_providers(self, provider_cls: _Provider):
-        cls = provider_cls.page_type_class
-        data = {cls.item_key: {"url": "http://example.com"}}
+    @pytest.mark.parametrize("provided_cls", DATA_INPUTS)
+    async def test_providers(self, provided_cls: AutoExtractProductData):
+        data = {provided_cls.item_key: {"url": "http://example.com"}}
 
-        class Provider(provider_cls):
+        class Provider(AutoExtractProvider):
             async def do_request(self, *args, **kwargs):
                 assert kwargs['api_key'] == "key"
                 assert kwargs['endpoint'] == "url"
                 assert kwargs['max_query_error_retries'] == 31415
                 return [data]
 
-        def callback(item: cls):
+        def callback(item: provided_cls):
             pass
 
         settings = {
@@ -48,26 +46,26 @@ class TestProviders:
         deps = await injector.build_callback_dependencies(response.request,
                                                           response)
         assert deps["item"].data == data
-        assert type(deps["item"]) is cls
+        assert type(deps["item"]) is provided_cls
         stats = injector.crawler.stats
-        assert stats.get_value(f"autoextract/{cls.item_key}/total") == 1
+        assert stats.get_value(f"autoextract/{provided_cls.item_key}/total") == 1
         assert stats.get_value(
-            f"autoextract/{cls.item_key}/error/query") is None
+            f"autoextract/{provided_cls.item_key}/error/query") is None
         assert stats.get_value(
-            f"autoextract/{cls.item_key}/error/request") is None
-        assert stats.get_value(f"autoextract/{cls.item_key}/success") == 1
+            f"autoextract/{provided_cls.item_key}/error/request") is None
+        assert stats.get_value(f"autoextract/{provided_cls.item_key}/success") == 1
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("provider_cls", PROVIDERS)
-    async def test_providers_on_query_error(self, provider_cls: _Provider):
-        cls = provider_cls.page_type_class
+    @pytest.mark.parametrize("provided_cls", DATA_INPUTS)
+    async def test_providers_on_query_error(self, provided_cls: AutoExtractData):
+        provided_cls
         data = {"query": "The query", "error": "This is an error"}
 
-        class Provider(provider_cls):
+        class Provider(AutoExtractProvider):
             async def do_request(self, *args, **kwargs):
                 return [data]
 
-        def callback(item: cls):
+        def callback(item: provided_cls):
             pass
 
         injector = get_injector_for_testing({Provider: 500})
@@ -75,23 +73,22 @@ class TestProviders:
         with pytest.raises(QueryError) as exinf:
             await injector.build_callback_dependencies(response.request, response)
         stats = injector.crawler.stats
-        assert stats.get_value(f"autoextract/{cls.item_key}/total") == 1
-        assert stats.get_value(f"autoextract/{cls.item_key}/error/query") == 1
-        assert stats.get_value(f"autoextract/{cls.item_key}/error/request") is None
-        assert stats.get_value(f"autoextract/{cls.item_key}/success") is None
+        assert stats.get_value(f"autoextract/{provided_cls.item_key}/total") == 1
+        assert stats.get_value(f"autoextract/{provided_cls.item_key}/error/query") == 1
+        assert stats.get_value(f"autoextract/{provided_cls.item_key}/error/request") is None
+        assert stats.get_value(f"autoextract/{provided_cls.item_key}/success") is None
         assert "This is an error" in str(exinf.value)
         assert "The query" in str(exinf.value)
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("provider_cls", PROVIDERS)
-    async def test_providers_on_exception(self, provider_cls: _Provider):
-        cls = provider_cls.page_type_class
+    @pytest.mark.parametrize("provided_cls", DATA_INPUTS)
+    async def test_providers_on_exception(self, provided_cls: AutoExtractData):
 
-        class Provider(provider_cls):
+        class Provider(AutoExtractProvider):
             async def do_request(self, *args, **kwargs):
                 raise Exception()
 
-        def callback(item: cls):
+        def callback(item: provided_cls):
             pass
 
         injector = get_injector_for_testing({Provider: 500})
@@ -99,7 +96,7 @@ class TestProviders:
         with pytest.raises(Exception) as exinf:
             await injector.build_callback_dependencies(response.request, response)
         stats = injector.crawler.stats
-        assert stats.get_value(f"autoextract/{cls.item_key}/total") == 1
-        assert stats.get_value(f"autoextract/{cls.item_key}/error/query") is None
-        assert stats.get_value(f"autoextract/{cls.item_key}/error/request") == 1
-        assert stats.get_value(f"autoextract/{cls.item_key}/success") is None
+        assert stats.get_value(f"autoextract/{provided_cls.item_key}/total") == 1
+        assert stats.get_value(f"autoextract/{provided_cls.item_key}/error/query") is None
+        assert stats.get_value(f"autoextract/{provided_cls.item_key}/error/request") == 1
+        assert stats.get_value(f"autoextract/{provided_cls.item_key}/success") is None
