@@ -54,6 +54,7 @@ class _Provider(PageObjectInputProvider):
         """Make an AutoExtract request and build a Page Input of provided class
         based on API response data.
         """
+        instances = []
         for cls in to_provide:
             if issubclass(cls, AutoExtractData):
                 page_type = cls.item_key
@@ -79,13 +80,15 @@ class _Provider(PageObjectInputProvider):
                     raise QueryError(data["query"], data["error"])
 
                 stats.inc_value(f"autoextract/{page_type}/success")
-                return {cls: cls(data=data)}
+                instances.append(cls(data=data))
             elif cls is AutoExtractHtml:
                 raise NotImplemented()
             else:
                 raise RuntimeError(
                     f"Unexpected {cls} requested. Probably a bug in the provider "
-                    f"or in scrapy-poet itself")
+                    "or in scrapy-poet itself")
+
+        return instances
 
 
 class ArticleDataProvider(_Provider):

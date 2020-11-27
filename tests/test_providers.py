@@ -43,7 +43,7 @@ class TestProviders:
             "AUTOEXTRACT_URL": "url",
             "AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES": 31415
         }
-        injector = get_injector_for_testing([Provider], settings)
+        injector = get_injector_for_testing({Provider: 500}, settings)
         response = get_response_for_testing(callback)
         deps = await injector.build_callback_dependencies(response.request,
                                                           response)
@@ -70,7 +70,7 @@ class TestProviders:
         def callback(item: cls):
             pass
 
-        injector = get_injector_for_testing([Provider])
+        injector = get_injector_for_testing({Provider: 500})
         response = get_response_for_testing(callback)
         with pytest.raises(QueryError) as exinf:
             await injector.build_callback_dependencies(response.request, response)
@@ -94,7 +94,7 @@ class TestProviders:
         def callback(item: cls):
             pass
 
-        injector = get_injector_for_testing([Provider])
+        injector = get_injector_for_testing({Provider: 500})
         response = get_response_for_testing(callback)
         with pytest.raises(Exception) as exinf:
             await injector.build_callback_dependencies(response.request, response)
