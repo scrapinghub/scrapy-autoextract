@@ -1,6 +1,7 @@
 import pytest
 
-from autoextract_poet import AutoExtractArticleData, AutoExtractProductData
+from autoextract_poet import AutoExtractArticleData, AutoExtractProductData, \
+    AutoExtractHtml
 from autoextract_poet.page_inputs import AutoExtractData
 from scrapy_autoextract.providers import (
     QueryError, AutoExtractProvider,
@@ -24,7 +25,8 @@ class TestProviders:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("provided_cls", DATA_INPUTS)
     async def test_providers(self, provided_cls: AutoExtractProductData):
-        data = {provided_cls.item_key: {"url": "http://example.com"}}
+        page_type = provided_cls.page_type
+        data = {page_type: {"url": "http://example.com", "html": "html_content"}}
 
         class Provider(AutoExtractProvider):
             async def do_request(self, *args, **kwargs):
@@ -34,6 +36,12 @@ class TestProviders:
                 return [data]
 
         def callback(item: provided_cls):
+            pass
+
+        def callback_with_html(item: provided_cls, html: AutoExtractHtml):
+            pass
+
+        def callback_only_html(html: AutoExtractHtml):
             pass
 
         settings = {
@@ -48,17 +56,17 @@ class TestProviders:
         assert deps["item"].data == data
         assert type(deps["item"]) is provided_cls
         stats = injector.crawler.stats
-        assert stats.get_value(f"autoextract/{provided_cls.item_key}/total") == 1
+        assert stats.get_value(f"autoextract/{page_type}/total") == 1
         assert stats.get_value(
-            f"autoextract/{provided_cls.item_key}/error/query") is None
+            f"autoextract/{page_type}/error/query") is None
         assert stats.get_value(
-            f"autoextract/{provided_cls.item_key}/error/request") is None
-        assert stats.get_value(f"autoextract/{provided_cls.item_key}/success") == 1
+            f"autoextract/{page_type}/error/request") is None
+        assert stats.get_value(f"autoextract/{page_type}/success") == 1
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("provided_cls", DATA_INPUTS)
     async def test_providers_on_query_error(self, provided_cls: AutoExtractData):
-        provided_cls
+        page_type = provided_cls.page_type
         data = {"query": "The query", "error": "This is an error"}
 
         class Provider(AutoExtractProvider):
@@ -73,10 +81,10 @@ class TestProviders:
         with pytest.raises(QueryError) as exinf:
             await injector.build_callback_dependencies(response.request, response)
         stats = injector.crawler.stats
-        assert stats.get_value(f"autoextract/{provided_cls.item_key}/total") == 1
-        assert stats.get_value(f"autoextract/{provided_cls.item_key}/error/query") == 1
-        assert stats.get_value(f"autoextract/{provided_cls.item_key}/error/request") is None
-        assert stats.get_value(f"autoextract/{provided_cls.item_key}/success") is None
+        assert stats.get_value(f"autoextract/{page_type}/total") == 1
+        assert stats.get_value(f"autoextract/{page_type}/error/query") == 1
+        assert stats.get_value(f"autoextract/{page_type}/error/request") is None
+        assert stats.get_value(f"autoextract/{page_type}/success") is None
         assert "This is an error" in str(exinf.value)
         assert "The query" in str(exinf.value)
 
@@ -91,12 +99,13 @@ class TestProviders:
         def callback(item: provided_cls):
             pass
 
+        page_type = provided_cls.page_type
         injector = get_injector_for_testing({Provider: 500})
         response = get_response_for_testing(callback)
         with pytest.raises(Exception) as exinf:
             await injector.build_callback_dependencies(response.request, response)
         stats = injector.crawler.stats
-        assert stats.get_value(f"autoextract/{provided_cls.item_key}/total") == 1
-        assert stats.get_value(f"autoextract/{provided_cls.item_key}/error/query") is None
-        assert stats.get_value(f"autoextract/{provided_cls.item_key}/error/request") == 1
-        assert stats.get_value(f"autoextract/{provided_cls.item_key}/success") is None
+        assert stats.get_value(f"autoextract/{page_type}/total") == 1
+        assert stats.get_value(f"autoextract/{page_type}/error/query") is None
+        assert stats.get_value(f"autoextract/{page_type}/error/request") == 1
+        assert stats.get_value(f"autoextract/{page_type}/success") is None
