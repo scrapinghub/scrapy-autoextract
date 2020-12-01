@@ -116,7 +116,7 @@ class AutoExtractProvider(PageObjectInputProvider):
     def get_filled_request(self,
                            request: ScrapyRequest,
                            provided_cls : AutoExtractData,
-                           should_request_html: bool):
+                           should_request_html: bool) -> AutoExtractRequest:
         """Return a filled request for AutoExtract"""
         ae_request = AutoExtractRequest(
             url=request.url,
