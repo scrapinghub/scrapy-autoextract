@@ -1,12 +1,12 @@
 import inspect
 from asyncio import CancelledError
-from typing import Callable, Set, ClassVar, Type, List
+from typing import Callable, Set, ClassVar, Type, List, Any
 
 import aiohttp
 
 
 from autoextract.aio import request_raw, create_session
-from autoextract.aio.errors import DomainOccupied, RequestError, \
+from autoextract.aio.errors import RequestError, \
     ACCOUNT_DISABLED_ERROR_TYPE
 from autoextract.aio.retry import RetryFactory
 from autoextract.request import Request as AutoExtractRequest
@@ -17,35 +17,9 @@ from autoextract_poet.page_inputs import (
 from scrapy import Request as ScrapyRequest
 from scrapy.crawler import Crawler
 from scrapy.statscollectors import StatsCollector
+from .errors import QueryError, summarize_exception
 from .task_manager import TaskManager
 from scrapy_poet.page_input_providers import PageObjectInputProvider
-
-
-class QueryError(Exception):
-
-    def __init__(self, query: dict, message: str):
-        self.query = query
-        self.message = message
-
-    def __str__(self):
-        return f"QueryError: query={self.query}, message='{self.message}'"
-
-
-def summarize_exception(exc):
-    """
-    Provides a text that represents the exception. To be used in stats, so
-    produced text shouldn't be too diverse.
-    """
-    if isinstance(exc, QueryError):
-        msg = exc.message
-        if DomainOccupied.from_message(msg):
-            # Removes variability from domain occupy messages
-            msg = "domain occupied"
-        msg = f"/query/{msg}"
-    else:
-        msg = f"/rest/{exc.__class__.__name__}"
-    return msg
-
 
 _TASK_MANAGER = "_autoextract_task_manager"
 
@@ -78,7 +52,7 @@ class AutoExtractProvider(PageObjectInputProvider):
     page_type_class: ClassVar[Type]
 
     # pageType requested when only html is required
-    page_type_for_html: ClassVar[AutoExtractData] = AutoExtractProductData
+    page_type_class_for_html: ClassVar[AutoExtractData] = AutoExtractProductData
     html_query_attribute: ClassVar[str] = "fullHtml"
 
     @classmethod
@@ -110,6 +84,13 @@ class AutoExtractProvider(PageObjectInputProvider):
     async def do_request(self, *args, **kwargs):
         return await request_raw(*args, **kwargs)
 
+    def pre_process_item_data(self, data) -> Any:
+        """
+        Hook for transforming data before any further processing, just after
+        receive the content
+        """
+        return data
+
     async def __call__(self,
                        to_provide: Set[Callable],
                        request: ScrapyRequest,
@@ -123,7 +104,7 @@ class AutoExtractProvider(PageObjectInputProvider):
         is_extraction_required = bool(to_provide)
         if is_html_required and not is_extraction_required:
             # At least one request is required to get html
-            to_provide = {self.page_type_for_html}
+            to_provide = {self.page_type_class_for_html}
 
         instances = []
         for idx, provided_cls in enumerate(to_provide):
@@ -155,6 +136,7 @@ class AutoExtractProvider(PageObjectInputProvider):
                 })
                 response = await self.task_manager.run(awaitable)
                 data = response[0]
+                data = self.pre_process_item_data(data)
                 if "error" in data:
                     raise QueryError(data["query"], data["error"])
 
@@ -171,13 +153,16 @@ class AutoExtractProvider(PageObjectInputProvider):
                 inc_stats("/attempts/count", request_stats.n_attempts)
                 inc_stats("/attempts/billable", request_stats.n_billable_query_responses)
 
-            provided_cls.item_class
-            instances.append(provided_cls(data=data))
-            inc_stats("/pages/success", both=True)
-
             if should_request_html:
-                instances.append(AutoExtractHtml(url=data['url'], html=data['html']))
-                stats.inc_value(f"/pages/html")
+                instances.append(AutoExtractHtml(url=data[page_type]['url'],
+                                                 html=data['html']))
+                inc_stats(f"/pages/html", both=True)
+
+            if is_extraction_required:
+                data.pop("html", None)
+                instances.append(provided_cls(data=data))
+
+            inc_stats("/pages/success", both=True)
 
         return instances
 

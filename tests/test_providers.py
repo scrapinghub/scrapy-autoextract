@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import os
 import signal
 from asyncio import CancelledError
@@ -18,8 +19,9 @@ from autoextract_poet.page_inputs import AutoExtractData
 from scrapy import Spider
 from scrapy.crawler import Crawler
 from scrapy_autoextract.providers import (
-    QueryError, AutoExtractProvider, _stop_if_account_disabled,
+    AutoExtractProvider, _stop_if_account_disabled,
 )
+from scrapy_autoextract.errors import QueryError
 from scrapy_poet.injection import get_injector_for_testing, get_response_for_testing
 
 DATA_INPUTS = (
@@ -28,12 +30,7 @@ DATA_INPUTS = (
 )
 
 
-def test_query_error():
-    exc = QueryError({"foo": "bar"}, "sample error")
-    assert str(exc) == "QueryError: query={'foo': 'bar'}, message='sample error'"
-
-
-def test_stop_on_account_disabled(mocker: MockerFixture):
+def test_stop_spider_on_account_disabled(mocker: MockerFixture):
     class Engine:
         close_spider = mocker.Mock()
 
@@ -63,7 +60,9 @@ class TestProviders:
     @pytest.mark.parametrize("provided_cls", DATA_INPUTS)
     def test_providers(self, provided_cls: AutoExtractProductData):
         page_type = provided_cls.page_type
-        data = {page_type: {"url": "http://example.com", "html": "html_content"}}
+        url, html = "http://example.com", "html_content"
+        data_wo_html = {page_type: {"url": url}}
+        data = {page_type: {"url": url}, "html": html}
 
         class Provider(AutoExtractProvider):
             async def do_request(self, *args, agg_stats: AggStats, **kwargs):
@@ -72,7 +71,7 @@ class TestProviders:
                 assert kwargs['api_key'] == "key"
                 assert kwargs['endpoint'] == "url"
                 assert kwargs['max_query_error_retries'] == 31415
-                return [data]
+                return [copy.deepcopy(data)]
 
         def callback(item: provided_cls):
             pass
@@ -89,12 +88,15 @@ class TestProviders:
             "AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES": 31415
         }
         injector = get_injector_for_testing({Provider: 500}, settings)
-        response = get_response_for_testing(callback)
-        deps = yield injector.build_callback_dependencies(response.request,
-                                                          response)
-        assert deps["item"].data == data
-        assert type(deps["item"]) is provided_cls
         stats = injector.crawler.stats
+
+        #  - No HTML requested case -
+
+        response = get_response_for_testing(callback)
+        kwargs = yield injector.build_callback_dependencies(response.request,
+                                                          response)
+        assert kwargs["item"].data == data_wo_html
+        assert type(kwargs["item"]) is provided_cls
         expected_stats = {
             'autoextract/total/pages/count': 1,
             'autoextract/total/pages/success': 1,
@@ -104,6 +106,51 @@ class TestProviders:
             f'autoextract/{page_type}/pages/success': 1
         }
         assert_stats(stats, expected_stats)
+
+        #  - Both HTML and item requested case -
+
+        response = get_response_for_testing(callback_with_html)
+        kwargs = yield injector.build_callback_dependencies(response.request,
+                                                          response)
+        item, html_response = kwargs["item"], kwargs["html"]
+        assert item.data == data_wo_html
+        assert type(item) is provided_cls
+        assert (html_response.url, html_response.html) == (url, html)
+        assert type(html_response) is AutoExtractHtml
+        expected_stats = {
+            'autoextract/total/pages/count': 2,
+            'autoextract/total/pages/success': 2,
+            'autoextract/total/pages/html': 1,
+            'autoextract/total/attempts/count': 6,
+            'autoextract/total/attempts/billable': 4,
+            f'autoextract/{page_type}/pages/count': 2,
+            f'autoextract/{page_type}/pages/success': 2,
+            f'autoextract/{page_type}/pages/html': 1,
+        }
+        assert_stats(stats, expected_stats)
+
+        #  - Only HTML is requested case -
+
+        injector.providers[0].page_type_class_for_html = provided_cls
+        response = get_response_for_testing(callback_only_html)
+        kwargs = yield injector.build_callback_dependencies(response.request,
+                                                          response)
+        assert "item" not in kwargs
+        html_response = kwargs["html"]
+        assert (html_response.url, html_response.html) == (url, html)
+        assert type(html_response) is AutoExtractHtml
+        expected_stats = {
+            'autoextract/total/pages/count': 3,
+            'autoextract/total/pages/success': 3,
+            'autoextract/total/pages/html': 2,
+            'autoextract/total/attempts/count': 9,
+            'autoextract/total/attempts/billable': 6,
+            f'autoextract/{page_type}/pages/count': 3,
+            f'autoextract/{page_type}/pages/success': 3,
+            f'autoextract/{page_type}/pages/html': 2,
+        }
+        assert_stats(stats, expected_stats)
+
 
     @inlineCallbacks
     @pytest.mark.parametrize("provided_cls", DATA_INPUTS)
