@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import signal
-from asyncio.exceptions import CancelledError
+from asyncio import CancelledError
 from typing import Awaitable, Set, TypeVar
 
 from scrapy.utils.ossignal import signal_names
