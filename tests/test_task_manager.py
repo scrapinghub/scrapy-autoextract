@@ -5,8 +5,8 @@ from asyncio import CancelledError
 from collections import Counter
 
 import pytest
-
 from scrapy_autoextract.task_manager import TaskManager
+from tests.utils import async_test
 
 
 class _TasksBench:
@@ -50,7 +50,8 @@ def tasks_bench():
 
 
 class TestTaskManager:
-    @pytest.mark.asyncio
+
+    @async_test
     async def test_run(self, tasks_bench):
         """Run 10 tasks and waits for it"""
         await tasks_bench.lock.acquire()
@@ -62,7 +63,7 @@ class TestTaskManager:
         assert sum(result) == sum(range(tasks_bench.n))
         assert len(tasks_bench.manager.running_tasks) == 0
 
-    @pytest.mark.asyncio
+    @async_test
     async def test_cancel_all(self, tasks_bench):
         """Run 10 tasks that waits on lock, and at some point all are cancelled"""
         await tasks_bench.lock.acquire()
@@ -78,7 +79,7 @@ class TestTaskManager:
         with pytest.raises(CancelledError):
             await tasks_bench.manager.run(tasks_bench.identity(1))
 
-    @pytest.mark.asyncio
+    @async_test
     async def test_signal_cancelation(self):
         """ Run 10 tasks that waits on lock, and at some point all are cancelled by a signal"""
         old_signal_handler_called = []
