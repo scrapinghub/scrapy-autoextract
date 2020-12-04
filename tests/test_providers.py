@@ -1,12 +1,19 @@
+import asyncio
+import os
+import signal
+from asyncio import CancelledError
+from signal import SIGINT
+
 import pytest
 from pytest_mock import MockerFixture
 from pytest_twisted import inlineCallbacks
+from twisted.internet.defer import Deferred
 
 from autoextract.aio.errors import ACCOUNT_DISABLED_ERROR_TYPE
 from autoextract.stats import AggStats
 from autoextract_poet import (
     AutoExtractArticleData, AutoExtractProductData, AutoExtractHtml)
-from tests.utils import assert_stats, request_error
+from tests.utils import assert_stats, request_error, async_test
 from autoextract_poet.page_inputs import AutoExtractData
 from scrapy import Spider
 from scrapy.crawler import Crawler
@@ -100,7 +107,7 @@ class TestProviders:
 
     @inlineCallbacks
     @pytest.mark.parametrize("provided_cls", DATA_INPUTS)
-    def test_providers_on_query_error(self, provided_cls: AutoExtractData):
+    def test_on_query_error(self, provided_cls: AutoExtractData):
         page_type = provided_cls.page_type
         data = {"query": "The query", "error": "Download error"}
 
@@ -133,7 +140,7 @@ class TestProviders:
 
     @inlineCallbacks
     @pytest.mark.parametrize("provided_cls", DATA_INPUTS)
-    def test_providers_on_exception(self, provided_cls: AutoExtractData):
+    def test_on_exception(self, provided_cls: AutoExtractData):
 
         class Provider(AutoExtractProvider):
             async def do_request(self, *args, agg_stats: AggStats, **kwargs):
@@ -160,3 +167,56 @@ class TestProviders:
             'autoextract/total/pages/error/rest/Exception': 1
         }
         assert_stats(stats, expected)
+
+    @async_test
+    @pytest.mark.parametrize("provided_cls", DATA_INPUTS)
+    async def test_on_cancellation(self, provided_cls: AutoExtractProductData):
+        old_handler = signal.getsignal(SIGINT)
+        signal.signal(SIGINT, lambda x, y: None)
+        try:
+            lock = asyncio.Lock()
+            await lock.acquire()
+
+            class Provider(AutoExtractProvider):
+                async def do_request(self, *args, agg_stats: AggStats, **kwargs):
+                    await lock.acquire()
+
+            def callback(item: provided_cls):
+                pass
+
+            injector = get_injector_for_testing({Provider: 500})
+            stats = injector.crawler.stats
+            response = get_response_for_testing(callback)
+            deferred = injector.build_callback_dependencies(response.request,
+                                                              response)
+            build_callbacks_future = Deferred.asFuture(deferred, asyncio.get_event_loop())
+
+            async def cancel_after(sleep):
+                await asyncio.sleep(sleep)
+                pid = os.getpid()
+                try:
+                    os.kill(pid, SIGINT)
+                except KeyboardInterrupt:
+                    # As an effect of the SIGINT killing the process might receive
+                    # here a KeyboardInterrupt exception. This is Ok.
+                    pass
+                return CancelledError()
+
+            result = await asyncio.gather(
+                build_callbacks_future, cancel_after(0.05), return_exceptions=True
+            )
+            assert all([isinstance(r, CancelledError) for r in result])
+
+            page_type = provided_cls.page_type
+            expected_stats = {
+                'autoextract/total/pages/count': 1,
+                'autoextract/total/pages/cancelled': 1,
+                'autoextract/total/pages/error': 0,
+                f'autoextract/{page_type}/pages/count': 1,
+                f'autoextract/{page_type}/pages/cancelled': 1,
+                f'autoextract/{page_type}/pages/error': 0,
+            }
+            assert_stats(stats, expected_stats)
+
+        finally:
+            signal.signal(SIGINT, old_handler)

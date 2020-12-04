@@ -32,6 +32,6 @@ def request_error(payload) -> RequestError:
 
 def assert_stats(stats: StatsCollector, expected: dict):
     for k, expected_val in expected.items():
-        actual_val = stats.get_value(k)
+        actual_val = stats.get_value(k, 0)
         assert actual_val == expected_val, \
             f"key: '{k}', value: {actual_val}, expected: {expected_val}"
