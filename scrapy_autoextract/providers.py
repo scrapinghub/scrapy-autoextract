@@ -125,6 +125,19 @@ class AutoExtractProvider(PageObjectInputProvider):
         """
         return get_domain(request.url)
 
+    def get_filled_request(self,
+                           request: ScrapyRequest,
+                           provided_cls: AutoExtractData,
+                           should_request_html: bool) -> AutoExtractRequest:
+        """Return a filled request for AutoExtract"""
+        ae_request = AutoExtractRequest(
+            url=request.url,
+            pageType=provided_cls.page_type,
+        )
+        if should_request_html:
+            ae_request.extra = {self.html_query_attribute: True}
+        return ae_request
+
     async def __call__(self,
                        to_provide: Set[Callable],
                        request: ScrapyRequest,
@@ -201,16 +214,3 @@ class AutoExtractProvider(PageObjectInputProvider):
             inc_stats("/pages/success", both=True)
 
         return instances
-
-    def get_filled_request(self,
-                           request: ScrapyRequest,
-                           provided_cls: AutoExtractData,
-                           should_request_html: bool) -> AutoExtractRequest:
-        """Return a filled request for AutoExtract"""
-        ae_request = AutoExtractRequest(
-            url=request.url,
-            pageType=provided_cls.page_type,
-        )
-        if should_request_html:
-            ae_request.extra = {self.html_query_attribute: True}
-        return ae_request
