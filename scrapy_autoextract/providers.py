@@ -1,6 +1,6 @@
 import inspect
 from asyncio import CancelledError
-from typing import Callable, Set, ClassVar, Type, List, Any
+from typing import Callable, Set, ClassVar, Type, List, Any, Hashable
 
 import aiohttp
 
@@ -16,10 +16,13 @@ from autoextract_poet.page_inputs import (
 )
 from scrapy import Request as ScrapyRequest
 from scrapy.crawler import Crawler
+from scrapy.settings import Settings
 from scrapy.statscollectors import StatsCollector
 from .errors import QueryError, summarize_exception
+from .slot_semaphore import SlotsSemaphore
 from .task_manager import TaskManager
 from scrapy_poet.page_input_providers import PageObjectInputProvider
+from .utils import get_domain
 
 _TASK_MANAGER = "_autoextract_task_manager"
 
@@ -47,6 +50,15 @@ def _stop_if_account_disabled(exception: Exception, crawler: Crawler):
         crawler.engine.close_spider(crawler.spider, "account_disabled")
 
 
+def get_concurrent_requests_per_domain(settings: Settings):
+    """Return the configured concurrent request per domain from settings"""
+    concurrency = settings.getint("CONCURRENT_REQUESTS_PER_DOMAIN", 8)
+    if concurrency < 1:
+        raise ValueError("Invalid 'CONCURRENT_REQUESTS_PER_DOMAIN' "
+                         f"value: {concurrency}")
+    return concurrency
+
+
 class AutoExtractProvider(PageObjectInputProvider):
     """Provider for AutoExtract data"""
     page_type_class: ClassVar[Type]
@@ -64,18 +76,29 @@ class AutoExtractProvider(PageObjectInputProvider):
         """Initialize provider storing its dependencies as attributes."""
         self.crawler = crawler
         self.settings = crawler.spider.settings
+        self.logger = self.crawler.spider.logger
         self.task_manager = get_autoextract_task_manager(crawler)
         self.aiohttp_session = self.create_aiohttp_session()
+        retries_count = self.settings.getint(
+                "AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES", 3)
         self.common_request_kwargs = dict(
             api_key=self.settings.get("AUTOEXTRACT_USER"),
             endpoint=self.settings.get("AUTOEXTRACT_URL"),
-            max_query_error_retries=self.settings.getint(
-                "AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES", 3),
+            max_query_error_retries=retries_count,
             session=self.aiohttp_session
+        )
+        per_domain_concurrency = get_concurrent_requests_per_domain(self.settings)
+        self.per_domain_semaphore = SlotsSemaphore(per_domain_concurrency)
+        self.logger.info(
+            f"AutoExtractProvider started. Retries: {retries_count}, "
+            f"per domain concurrency: {per_domain_concurrency}"
         )
 
     def create_aiohttp_session(self) -> aiohttp.ClientSession:
         concurrent_connections = self.settings.get("CONCURRENT_REQUESTS", 16)
+        self.logger.info(
+            f"AutoExtractProvider concurrent requests: {concurrent_connections}"
+        )
         return create_session(connection_pool_size=concurrent_connections)
 
     def create_retry_wrapper(self):
@@ -90,6 +113,17 @@ class AutoExtractProvider(PageObjectInputProvider):
         receive the content
         """
         return data
+
+    def get_per_domain_concurrency_slot(self, request: ScrapyRequest) -> Hashable:
+        """
+        Return the key that will be used to identify the domain of this request.
+        This key is used to modulate the per request concurrency that can be
+        set using the setting `CONCURRENT_REQUESTS_PER_DOMAIN`.
+
+        By default the key is the request domain. Override it to change
+        the behavior.
+        """
+        return get_domain(request.url)
 
     async def __call__(self,
                        to_provide: Set[Callable],
@@ -124,6 +158,7 @@ class AutoExtractProvider(PageObjectInputProvider):
             try:
                 # html is requested only a single time to save resources
                 should_request_html = is_html_required and is_first_request
+                slot = self.get_per_domain_concurrency_slot(request)
                 ae_request = self.get_filled_request(
                     request,
                     provided_cls,
@@ -134,6 +169,7 @@ class AutoExtractProvider(PageObjectInputProvider):
                     'agg_stats': request_stats,
                     **self.common_request_kwargs,
                 })
+                awaitable = self.per_domain_semaphore.run(awaitable, slot)
                 response = await self.task_manager.run(awaitable)
                 data = response[0]
                 data = self.pre_process_item_data(data)

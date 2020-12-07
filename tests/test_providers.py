@@ -85,10 +85,15 @@ class TestProviders:
         settings = {
             "AUTOEXTRACT_USER": "key",
             "AUTOEXTRACT_URL": "url",
-            "AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES": 31415
+            "AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES": 31415,
+            "CONCURRENT_REQUESTS": 2020,
+            "CONCURRENT_REQUESTS_PER_DOMAIN": 1980,
         }
         injector = get_injector_for_testing({Provider: 500}, settings)
         stats = injector.crawler.stats
+        provider = injector.providers[-1]
+        assert provider.per_domain_semaphore.concurrency_per_slot == 1980
+        assert provider.aiohttp_session.connector.limit == 2020
 
         #  - No HTML requested case -
 
