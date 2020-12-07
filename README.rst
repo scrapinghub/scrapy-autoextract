@@ -119,7 +119,7 @@ First, you need to configure scrapy-poet as described on `scrapy-poet's document
 and then enable AutoExtract providers by putting the following code to Scrapy's ``settings.py`` file::
 
     # Install AutoExtract provider
-    SCRAPY_POET_PROVIDERS = {"scrapy_autoextract.AutoextractProvider": 500}
+    SCRAPY_POET_PROVIDERS = {"scrapy_autoextract.AutoExtractProvider": 500}
 
     # Enable scrapy-poet's provider injection middleware
     DOWNLOADER_MIDDLEWARES = {
