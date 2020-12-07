@@ -16,9 +16,11 @@ Scrapy & Autoextract API integration
 
 
 This library integrates ScrapingHub's AI Enabled Automatic Data Extraction
-into a Scrapy spider using a downloader middleware.
-The middleware adds the result of AutoExtract to ``response.meta['autoextract']``
-for consumption by the spider.
+into a Scrapy spider by two different means:
+
+* with a downloader middleware, that injects the AutoExtract responses into ``response.meta['autoextract']``
+  for consumption by the spider.
+* with a `scrapy-poet`_ provider that injects the responses into the callbacks
 
 
 Installation
@@ -28,7 +30,7 @@ Installation
 
     pip install scrapy-autoextract
 
-scrapy-autoextract requires Python 3.6+
+scrapy-autoextract requires Python 3.6+ for the download middleware and Python 3.7+ for the scrapy-poet provider
 
 
 Usage
@@ -37,7 +39,7 @@ Usage
 There are two different ways to consume the AutoExtract API with this library:
 
 * using our Scrapy middleware
-* using our Page Object providers
+* using our Page Object provider
 
 The middleware
 --------------
@@ -69,13 +71,13 @@ The providers
 Another way of consuming AutoExtract API is using the Page Objects pattern
 proposed by the `web-poet`_ library and implemented by `scrapy-poet`_.
 
-Page Objects their returned Items are defined by the `autoextract-poet`_
+Page Objects returned Items are defined by the `autoextract-poet`_
 library.
 
 Within the spider, consuming the AutoExtract result is as easy as::
 
     import scrapy
-    from autoextract_poet.page_inputs import AutoExtractArticleData
+    from autoextract_poet import AutoExtractArticleData
 
     class SampleSpider(scrapy.Spider):
 
@@ -99,8 +101,8 @@ This will ignore the Scrapy request and only the AutoExtract API will be fetched
 For example::
 
     import scrapy
-    from autoextract_poet.page_inputs import AutoExtractArticleData
-    from scrapy_poet.utils import DummyResponse
+    from autoextract_poet import AutoExtractArticleData
+    from scrapy_poet import DummyResponse
 
     class SampleSpider(scrapy.Spider):
 
@@ -116,9 +118,8 @@ Configuration
 First, you need to configure scrapy-poet as described on `scrapy-poet's documentation`_
 and then enable AutoExtract providers by putting the following code to Scrapy's ``settings.py`` file::
 
-    # Install AutoExtract providers
-    import scrapy_autoextract.providers
-    scrapy_autoextract.providers.install()
+    # Install AutoExtract provider
+    SCRAPY_POET_PROVIDERS = {"scrapy_autoextract.AutoextractProvider": 500}
 
     # Enable scrapy-poet's provider injection middleware
     DOWNLOADER_MIDDLEWARES = {
