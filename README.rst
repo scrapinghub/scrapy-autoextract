@@ -18,9 +18,9 @@ Scrapy & Autoextract API integration
 This library integrates ScrapingHub's AI Enabled Automatic Data Extraction
 into a Scrapy spider by two different means:
 
-* with a downloader middleware, that injects the AutoExtract responses into ``response.meta['autoextract']``
+* with a downloader middleware that injects the AutoExtract responses into ``response.meta['autoextract']``
   for consumption by the spider.
-* with a `scrapy-poet`_ provider that injects the responses into the callbacks
+* with a `scrapy-poet`_ provider that injects the responses as callback parameters.
 
 
 Installation
@@ -208,7 +208,7 @@ Middleware settings
 Provider settings
 -----------------
 
-- ``AUTOEXTRACT_USER`` [optional] is your AutoExtract API key. Defaults to ``SCRAPINGHUB_AUTOEXTRACT_KEY`` environment variable.
+- ``AUTOEXTRACT_USER`` [mandatory] is your AutoExtract API key.
 - ``AUTOEXTRACT_URL`` [optional] the AutoExtract service url. Defaults to the official AutoExtract endpoint.
 - ``AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES`` [optional] Max number of retries for Query-level errors. Defaults to ``3``.
 
@@ -240,7 +240,8 @@ When using the AutoExtract providers, be aware that:
 
 * With scrapy-poet integration, retry requests don't go through Scrapy
 * Not all data types are supported with scrapy-poet,
-  currently only Articles and Products are supported
+  currently only Articles Products and Product List are supported with
+  `autoextract-poet`_
 
 .. _`web-poet`: https://github.com/scrapinghub/web-poet
 .. _`scrapy-poet`: https://github.com/scrapinghub/scrapy-poet
