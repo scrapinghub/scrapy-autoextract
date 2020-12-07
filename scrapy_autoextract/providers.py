@@ -56,9 +56,9 @@ class AutoExtractProvider(PageObjectInputProvider):
     html_query_attribute: ClassVar[str] = "fullHtml"
 
     @classmethod
-    def provided_classes(cls, type_ :Callable) -> bool:
-        return (inspect.isclass(type_) and
-                issubclass(type_, (AutoExtractData, AutoExtractHtml)))
+    def provided_classes(cls, type_: Callable) -> bool:
+        return (inspect.isclass(type_)
+                and issubclass(type_, (AutoExtractData, AutoExtractHtml)))
 
     def __init__(self, crawler: Crawler):
         """Initialize provider storing its dependencies as attributes."""
@@ -68,10 +68,10 @@ class AutoExtractProvider(PageObjectInputProvider):
         self.aiohttp_session = self.create_aiohttp_session()
         self.common_request_kwargs = dict(
             api_key=self.settings.get("AUTOEXTRACT_USER"),
-            endpoint = self.settings.get("AUTOEXTRACT_URL"),
-            max_query_error_retries = self.settings.getint(
+            endpoint=self.settings.get("AUTOEXTRACT_URL"),
+            max_query_error_retries=self.settings.getint(
                 "AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES", 3),
-            session = self.aiohttp_session
+            session=self.aiohttp_session
         )
 
     def create_aiohttp_session(self) -> aiohttp.ClientSession:
@@ -141,10 +141,10 @@ class AutoExtractProvider(PageObjectInputProvider):
                     raise QueryError(data["query"], data["error"])
 
             except CancelledError:
-                inc_stats(f"/pages/cancelled", both=True)
+                inc_stats("/pages/cancelled", both=True)
                 raise
             except Exception as e:
-                inc_stats(f"/pages/error", both=True)
+                inc_stats("/pages/error", both=True)
                 inc_stats(f"/pages/error{summarize_exception(e)}")
                 _stop_if_account_disabled(e, self.crawler)
                 raise
@@ -156,7 +156,7 @@ class AutoExtractProvider(PageObjectInputProvider):
             if should_request_html:
                 instances.append(AutoExtractHtml(url=data[page_type]['url'],
                                                  html=data['html']))
-                inc_stats(f"/pages/html", both=True)
+                inc_stats("/pages/html", both=True)
 
             if is_extraction_required:
                 data.pop("html", None)
@@ -168,7 +168,7 @@ class AutoExtractProvider(PageObjectInputProvider):
 
     def get_filled_request(self,
                            request: ScrapyRequest,
-                           provided_cls : AutoExtractData,
+                           provided_cls: AutoExtractData,
                            should_request_html: bool) -> AutoExtractRequest:
         """Return a filled request for AutoExtract"""
         ae_request = AutoExtractRequest(
