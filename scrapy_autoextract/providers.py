@@ -78,7 +78,7 @@ class AutoExtractProvider(PageObjectInputProvider):
         self.settings = crawler.spider.settings
         self.logger = self.crawler.spider.logger
         self.task_manager = get_autoextract_task_manager(crawler)
-        self.aiohttp_session = self.create_aiohttp_session()
+        self.aiohttp_session = None
         retries_count = self.settings.getint(
                 "AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES", 3)
         self.common_request_kwargs = dict(
@@ -94,7 +94,7 @@ class AutoExtractProvider(PageObjectInputProvider):
             f"per domain concurrency: {per_domain_concurrency}"
         )
 
-    def create_aiohttp_session(self) -> aiohttp.ClientSession:
+    async def create_aiohttp_session(self) -> aiohttp.ClientSession:
         concurrent_connections = self.settings.getint("CONCURRENT_REQUESTS", 16)
         self.logger.info(
             f"AutoExtractProvider concurrent requests: {concurrent_connections}"
@@ -146,6 +146,8 @@ class AutoExtractProvider(PageObjectInputProvider):
         """Make an AutoExtract request and build a Page Input of provided class
         based on API response data.
         """
+        if not self.aiohttp_session:
+            self.aiohttp_session = await self.create_aiohttp_session()
         is_html_required = AutoExtractHtml in to_provide
         to_provide -= {AutoExtractHtml}
         is_extraction_required = bool(to_provide)
