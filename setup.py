@@ -32,8 +32,7 @@ setup(
         #'scrapinghub-autoextract>=0.5.1',
         'scrapinghub-autoextract @ git+https://github.com/scrapinghub/scrapinghub-autoextract.git@dd109a0c9860d4ddbdc5de5c99ea53a131e1c2f2',
         #'scrapy-poet>=0.0.3',
-        'scrapy-poet @ git+https://github.com/scrapinghub/scrapy-poet.git@new-provider-interface',
-        'tldextract'
+        'scrapy-poet @ git+https://github.com/scrapinghub/scrapy-poet.git@new-provider-interface'
     ],
     keywords='scrapy autoextract middleware',
     classifiers=[

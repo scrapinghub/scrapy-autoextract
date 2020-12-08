@@ -14,9 +14,10 @@ from autoextract.aio.errors import ACCOUNT_DISABLED_ERROR_TYPE
 from autoextract.stats import AggStats
 from autoextract_poet import (
     AutoExtractArticleData, AutoExtractProductData, AutoExtractHtml)
+from scrapy.core.downloader import Downloader
 from tests.utils import assert_stats, request_error, async_test
 from autoextract_poet.page_inputs import AutoExtractData
-from scrapy import Spider
+from scrapy import Spider, Request
 from scrapy.crawler import Crawler
 from scrapy_autoextract.providers import (
     AutoExtractProvider, _stop_if_account_disabled,
@@ -272,3 +273,41 @@ class TestProviders:
 
         finally:
             signal.signal(SIGINT, old_handler)
+
+    def test_get_download_slot(self):
+
+        def provider_and_downloader_for(settings):
+            injector = get_injector_for_testing({AutoExtractProvider: 500}, settings)
+            provider = injector.providers[-1]
+
+            class MySpider(Spider):
+                name = "my_spider"
+
+            crawler = Crawler(MySpider, settings)
+            downloader = Downloader(crawler)
+            return provider, downloader
+
+        provider, downloader = provider_and_downloader_for({
+            "CONCURRENT_REQUESTS_PER_DOMAIN": 69
+        })
+        request = Request("http://example.com")
+        assert provider.per_domain_semaphore.concurrency_per_slot == 69
+        expected = downloader._get_slot_key(request, None)
+        assert provider.get_download_slot(request) == expected
+
+        provider, downloader = provider_and_downloader_for({
+            "CONCURRENT_REQUESTS_PER_DOMAIN": 69,
+            "CONCURRENT_REQUESTS_PER_IP": 128
+        })
+        request = Request("http://localhost")
+        assert provider.per_domain_semaphore.concurrency_per_slot == 128
+        expected = downloader._get_slot_key(request, None)
+        assert provider.get_download_slot(request) == expected
+
+        provider, downloader = provider_and_downloader_for({
+            "CONCURRENT_REQUESTS_PER_DOMAIN": 69,
+            "CONCURRENT_REQUESTS_PER_IP": 128
+        })
+        request = Request("http://localhost", meta={"download_slot": "my_slot"})
+        assert provider.per_domain_semaphore.concurrency_per_slot == 128
+        assert provider.get_download_slot(request) == "my_slot"
