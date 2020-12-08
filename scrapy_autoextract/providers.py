@@ -95,7 +95,7 @@ class AutoExtractProvider(PageObjectInputProvider):
         )
 
     def create_aiohttp_session(self) -> aiohttp.ClientSession:
-        concurrent_connections = self.settings.get("CONCURRENT_REQUESTS", 16)
+        concurrent_connections = self.settings.getint("CONCURRENT_REQUESTS", 16)
         self.logger.info(
             f"AutoExtractProvider concurrent requests: {concurrent_connections}"
         )
