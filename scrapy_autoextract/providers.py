@@ -193,8 +193,8 @@ class AutoExtractProvider(PageObjectInputProvider):
                 inc_stats("/pages/cancelled", both=True)
                 raise
             except Exception as e:
-                inc_stats("/pages/error", both=True)
-                inc_stats(f"/pages/error{summarize_exception(e)}")
+                inc_stats("/pages/errors", both=True)
+                inc_stats(f"/pages/errors{summarize_exception(e)}")
                 _stop_if_account_disabled(e, self.crawler)
                 raise
             finally:
