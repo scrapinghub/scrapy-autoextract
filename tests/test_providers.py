@@ -179,12 +179,12 @@ class TestProviders:
         stats = injector.crawler.stats
         expected = {
             f'autoextract/{page_type}/pages/count': 1,
-            f'autoextract/{page_type}/pages/error': 1,
+            f'autoextract/{page_type}/pages/errors': 1,
             'autoextract/total/attempts/count': 3,
             'autoextract/total/attempts/billable': 2,
             'autoextract/total/pages/count': 1,
-            'autoextract/total/pages/error': 1,
-            'autoextract/total/pages/error/query/Download error': 1
+            'autoextract/total/pages/errors': 1,
+            'autoextract/total/pages/errors/query/Download error': 1
         }
         assert_stats(stats, expected)
         assert "Download error" in str(exinf.value)
@@ -211,12 +211,12 @@ class TestProviders:
         stats = injector.crawler.stats
         expected = {
             f'autoextract/{page_type}/pages/count': 1,
-            f'autoextract/{page_type}/pages/error': 1,
+            f'autoextract/{page_type}/pages/errors': 1,
             'autoextract/total/attempts/count': 3,
             'autoextract/total/attempts/billable': 2,
             'autoextract/total/pages/count': 1,
-            'autoextract/total/pages/error': 1,
-            'autoextract/total/pages/error/rest/Exception': 1
+            'autoextract/total/pages/errors': 1,
+            'autoextract/total/pages/errors/rest/Exception': 1
         }
         assert_stats(stats, expected)
 
@@ -263,10 +263,10 @@ class TestProviders:
             expected_stats = {
                 'autoextract/total/pages/count': 1,
                 'autoextract/total/pages/cancelled': 1,
-                'autoextract/total/pages/error': 0,
+                'autoextract/total/pages/errors': 0,
                 f'autoextract/{page_type}/pages/count': 1,
                 f'autoextract/{page_type}/pages/cancelled': 1,
-                f'autoextract/{page_type}/pages/error': 0,
+                f'autoextract/{page_type}/pages/errors': 0,
             }
             assert_stats(stats, expected_stats)
 

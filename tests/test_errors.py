@@ -5,7 +5,7 @@ from scrapy_autoextract.errors import QueryError, summarize_exception
 
 def test_query_error():
     exc = QueryError({"foo": "bar"}, "sample error")
-    assert str(exc) == "QueryError: query={'foo': 'bar'}, message='sample error'"
+    assert str(exc) == "QueryError: message='sample error', query={'foo': 'bar'}"
 
 
 @pytest.mark.parametrize("exception, message", [

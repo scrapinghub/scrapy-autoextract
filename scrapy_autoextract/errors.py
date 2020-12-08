@@ -8,7 +8,7 @@ class QueryError(Exception):
         self.message = message
 
     def __str__(self):
-        return f"QueryError: message='{self.message}, query={self.query}'"
+        return f"QueryError: message='{self.message}', query={self.query}"
 
 
 def summarize_exception(exc):
