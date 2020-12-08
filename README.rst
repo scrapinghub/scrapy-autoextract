@@ -241,7 +241,7 @@ When using the AutoExtract providers, be aware that:
 
 * With scrapy-poet integration, retry requests don't go through Scrapy
 * Not all data types are supported with scrapy-poet,
-  currently only Articles Products and Product List are supported with
+  currently only Articles, Products and Product List are supported with
   `autoextract-poet`_
 
 .. _`web-poet`: https://github.com/scrapinghub/web-poet
