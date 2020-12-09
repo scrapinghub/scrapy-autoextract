@@ -14,7 +14,7 @@ from autoextract.stats import AggStats
 from autoextract_poet.page_inputs import (
     AutoExtractProductData, AutoExtractData, AutoExtractHtml,
 )
-from scrapy import Request as ScrapyRequest
+from scrapy import Request as ScrapyRequest, signals
 from scrapy.crawler import Crawler
 from scrapy.settings import Settings
 from scrapy.statscollectors import StatsCollector
@@ -79,6 +79,8 @@ class AutoExtractProvider(PageObjectInputProvider):
         self.logger = self.crawler.spider.logger
         self.task_manager = get_autoextract_task_manager(crawler)
         self.aiohttp_session = None
+        self.crawler.signals.connect(self.close_aiohttp_session,
+                                     signal=signals.spider_closed)
         retries_count = self.settings.getint(
                 "AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES", 3)
         self.common_request_kwargs = dict(
@@ -100,6 +102,10 @@ class AutoExtractProvider(PageObjectInputProvider):
             f"AutoExtractProvider concurrent requests: {concurrent_connections}"
         )
         return create_session(connection_pool_size=concurrent_connections)
+
+    async def close_aiohttp_session(self):
+        if self.aiohttp_session:
+            await self.aiohttp_session.close()
 
     def create_retry_wrapper(self):
         return RetryFactory().build()
@@ -180,7 +186,7 @@ class AutoExtractProvider(PageObjectInputProvider):
                     should_request_html
                 )
                 if not ae_request:
-                    raise ValueError(f"Unexpected empty return from method get_filled_request")
+                    raise ValueError("Unexpected empty return from method get_filled_request")
                 awaitable = self.do_request(**{
                     'query': [ae_request],
                     'agg_stats': request_stats,
@@ -212,8 +218,8 @@ class AutoExtractProvider(PageObjectInputProvider):
                 inc_stats("/pages/html", both=True)
 
             if is_extraction_required:
-                data.pop("html", None)
-                instances.append(provided_cls(data=data))
+                without_html = {k: v for k, v in data.items() if k != "html"}
+                instances.append(provided_cls(data=without_html))
 
             inc_stats("/pages/success", both=True)
 

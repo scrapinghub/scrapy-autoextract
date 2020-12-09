@@ -63,9 +63,11 @@ class TestProviders:
         url, html = "http://example.com", "html_content"
         data_wo_html = {page_type: {"url": url}}
         data = {page_type: {"url": url}, "html": html}
+        provider_wrapper = []
 
         class Provider(AutoExtractProvider):
             async def do_request(self, *args, agg_stats: AggStats, **kwargs):
+                assert provider.aiohttp_session.connector.limit == 2020
                 agg_stats.n_attempts += 3
                 agg_stats.n_billable_query_responses += 2
                 assert kwargs['api_key'] == "key"
@@ -92,8 +94,8 @@ class TestProviders:
         injector = get_injector_for_testing({Provider: 500}, settings)
         stats = injector.crawler.stats
         provider = injector.providers[-1]
+        provider_wrapper.append(provider)
         assert provider.per_domain_semaphore.concurrency_per_slot == 1980
-        assert provider.aiohttp_session.connector.limit == 2020
 
         #  - No HTML requested case -
 
