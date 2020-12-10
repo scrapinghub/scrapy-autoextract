@@ -1,4 +1,5 @@
 import inspect
+import logging
 from asyncio import CancelledError
 from typing import Callable, Set, ClassVar, Type, List, Any, Hashable
 
@@ -24,6 +25,10 @@ from .task_manager import TaskManager
 from scrapy_poet.page_input_providers import PageObjectInputProvider
 from .utils import get_domain
 
+
+logger = logging.getLogger(__name__)
+
+
 _TASK_MANAGER = "_autoextract_task_manager"
 
 
@@ -42,7 +47,6 @@ def _stop_if_account_disabled(exception: Exception, crawler: Crawler):
     if not isinstance(exception, RequestError):
         return
 
-    logger = crawler.spider.logger
     if exception.error_data().get("type") == ACCOUNT_DISABLED_ERROR_TYPE:
         logger.info(
             "'Account disabled' request error received. Shutting down the spider"
@@ -76,7 +80,6 @@ class AutoExtractProvider(PageObjectInputProvider):
         """Initialize provider storing its dependencies as attributes."""
         self.crawler = crawler
         self.settings = crawler.spider.settings
-        self.logger = self.crawler.spider.logger
         self.task_manager = get_autoextract_task_manager(crawler)
         self.aiohttp_session = None
         self.crawler.signals.connect(self.close_aiohttp_session,
@@ -91,14 +94,14 @@ class AutoExtractProvider(PageObjectInputProvider):
         )
         per_domain_concurrency = get_concurrent_requests_per_domain(self.settings)
         self.per_domain_semaphore = SlotsSemaphore(per_domain_concurrency)
-        self.logger.info(
+        logger.info(
             f"AutoExtractProvider started. Retries: {retries_count}, "
             f"per domain concurrency: {per_domain_concurrency}"
         )
 
     async def create_aiohttp_session(self) -> aiohttp.ClientSession:
         concurrent_connections = self.settings.getint("CONCURRENT_REQUESTS", 16)
-        self.logger.info(
+        logger.info(
             f"AutoExtractProvider concurrent requests: {concurrent_connections}"
         )
         return create_session(connection_pool_size=concurrent_connections)
