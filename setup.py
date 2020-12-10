@@ -30,7 +30,7 @@ setup(
         #'autoextract-poet>=0.0.1',
         'autoextract-poet @ git+https://github.com/scrapinghub/autoextract-poet.git@modern_providers',
         #'scrapinghub-autoextract>=0.5.1',
-        'scrapinghub-autoextract @ git+https://github.com/scrapinghub/scrapinghub-autoextract.git',
+        'scrapinghub-autoextract @ git+https://github.com/scrapinghub/scrapinghub-autoextract.git#egg=scrapinghub-autoextract',
         #'scrapy-poet>=0.0.3',
         'scrapy-poet @ git+https://github.com/scrapinghub/scrapy-poet.git@97c315d94a2f37ce7614836853de37197f7384e1',
         "aiohttp",
