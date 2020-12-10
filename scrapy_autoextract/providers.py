@@ -69,7 +69,6 @@ class AutoExtractProvider(PageObjectInputProvider):
 
     # pageType requested when only html is required
     page_type_class_for_html: ClassVar[AutoExtractData] = AutoExtractProductData
-    html_query_attribute: ClassVar[str] = "fullHtml"
 
     @classmethod
     def provided_classes(cls, type_: Callable) -> bool:
@@ -116,6 +115,9 @@ class AutoExtractProvider(PageObjectInputProvider):
     async def do_request(self, *args, **kwargs):
         return await request_raw(*args, **kwargs)
 
+    def get_html_query_attribute(self):
+        return "fullHtml"
+
     def pre_process_item_data(self, data) -> Any:
         """
         Hook for transforming data before any further processing, just after
@@ -144,7 +146,7 @@ class AutoExtractProvider(PageObjectInputProvider):
             pageType=provided_cls.page_type,
         )
         if should_request_html:
-            ae_request.extra = {self.html_query_attribute: True}
+            ae_request.extra = {self.get_html_query_attribute(): True}
         return ae_request
 
     async def __call__(self,
