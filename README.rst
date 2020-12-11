@@ -152,15 +152,15 @@ Those exceptions might come from scrapy-autoextract providers themselves,
 For example:
 
 * ``autoextract.aio.errors.RequestError``: raised when a `Request-level error`_ is returned
-* ``tenacity.RetryError``: raised when an error persists even after the retrials
+* ``scrapy_autoextract.errors.QueryError``: raised when a `Query-level error`_ is returned
 
-Check `scrapinghub-autoextract's async errors`_ for exception definitions.
+Check `scrapinghub-autoextract's async errors`_ for other exception definitions.
 
 You can capture those exceptions using an error callback (``errback``)::
 
     import scrapy
-    from autoextract.aio.errors import RequestError, QueryRetryError
-    from tenacity import RetryError
+    from autoextract.aio.errors import RequestError
+    from scrapy_autoextract.errors import QueryError
     from twisted.python.failure import Failure
 
     class SampleSpider(scrapy.Spider):
@@ -179,8 +179,8 @@ You can capture those exceptions using an error callback (``errback``)::
             if failure.check(RequestError):
                 self.logger.error(f"RequestError on {failure.request.url})
 
-            if failure.check(RetryError):
-                self.logger.error(f"RetryError on {failure.request.url})
+            if failure.check(QueryError):
+                self.logger.error(f"QueryError: {failure.message})
 
 See `Scrapy documentation <https://docs.scrapy.org/en/latest/topics/request-response.html#using-errbacks-to-catch-exceptions-in-request-processing>`_
 for more details on how to capture exceptions using request's errback.
