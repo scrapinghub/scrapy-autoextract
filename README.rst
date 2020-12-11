@@ -138,7 +138,7 @@ Checklist:
 
 * scrapy-poet is installed and downloader/injector middleware is configured
 * autoextract-poet is installed (page inputs are imported from this lib)
-* providers are installed on settings.py
+* providers are configured on settings.py
 * Scrapy's asyncio support is enabled on settings.py
 
 Now you should be ready to use our AutoExtract providers.
@@ -148,7 +148,7 @@ Exceptions
 
 While trying to fetch AutoExtract API, providers might raise some exceptions.
 Those exceptions might come from scrapy-autoextract providers themselves,
-`scrapinghub-autoextract`_, or Tenacity, the library used to implement retries.
+`scrapinghub-autoextract`_, or by other means (e.g. ``ConnectionError``).
 For example:
 
 * ``autoextract.aio.errors.RequestError``: raised when a `Request-level error`_ is returned
