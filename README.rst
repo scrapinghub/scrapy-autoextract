@@ -71,7 +71,7 @@ The providers
 Another way of consuming AutoExtract API is using the Page Objects pattern
 proposed by the `web-poet`_ library and implemented by `scrapy-poet`_.
 
-Page Objects returned Items are defined by the `autoextract-poet`_
+Items returned by Page Objects are defined in the `autoextract-poet`_
 library.
 
 Within the spider, consuming the AutoExtract result is as easy as::
@@ -241,7 +241,7 @@ When using the AutoExtract providers, be aware that:
 
 * With scrapy-poet integration, retry requests don't go through Scrapy
 * Not all data types are supported with scrapy-poet,
-  currently only Articles, Products and Product List are supported with
+  currently only Articles, Products and Product Lists are supported with
   `autoextract-poet`_
 
 .. _`web-poet`: https://github.com/scrapinghub/web-poet
