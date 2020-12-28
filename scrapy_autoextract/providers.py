@@ -55,11 +55,17 @@ def _stop_if_account_disabled(exception: Exception, crawler: Crawler):
 
 
 def get_concurrent_requests_per_domain(settings: Settings):
-    """Return the configured concurrent request per domain from settings"""
-    concurrency = settings.getint("CONCURRENT_REQUESTS_PER_DOMAIN", 8)
+    """Return the configured AutoExtract concurrent request per domain from settings"""
+    limit_name = "AUTOEXTRACT_CONCURRENT_REQUESTS_PER_DOMAIN"
+    concurrency = settings.getint(limit_name, -1)
+    # If no AutoExtract-specific limit is provided - use the default one
+    if concurrency is -1:
+        limit_name = "CONCURRENT_REQUESTS_PER_DOMAIN"
+        concurrency = settings.getint(limit_name, 8)
     if concurrency < 1:
-        raise ValueError("Invalid 'CONCURRENT_REQUESTS_PER_DOMAIN' "
+        raise ValueError(f"Invalid '{limit_name}' "
                          f"value: {concurrency}")
+    logger.info(f"Setting `concurrent requests per domain` limit to {concurrency}.")
     return concurrency
 
 
@@ -132,7 +138,7 @@ class AutoExtractProvider(PageObjectInputProvider):
         """
         Return the key that will be used to identify the domain of this request.
         This key is used to modulate the per request concurrency that can be
-        set using the setting `CONCURRENT_REQUESTS_PER_DOMAIN`.
+        set using the setting `AUTOEXTRACT_CONCURRENT_REQUESTS_PER_DOMAIN`.
 
         By default the key is the request domain. Override it to change
         the behavior.
