@@ -188,8 +188,6 @@ class AutoExtractProvider(PageObjectInputProvider):
                     provided_cls,
                     should_request_html
                 )
-                if not ae_request:
-                    raise ValueError("Unexpected empty return from method get_filled_request")
                 awaitable = self.do_request(**{
                     'query': [ae_request],
                     'agg_stats': request_stats,
