@@ -29,12 +29,12 @@ class TaskManager:
     Example usage::
 
         async def my_task(sleep):
-          await asyncio.sleep(sleep)
-          return "Finished"
+            await asyncio.sleep(sleep)
+            return "Finished"
 
         manager = TaskManager()
-        for i in range(10:
-          print(await manager.run(my_task(i)))
+        for i in range(10):
+            print(await manager.run(my_task(i)))
 
         await asyncio.sleep(5)
         manager.cancel_all()
