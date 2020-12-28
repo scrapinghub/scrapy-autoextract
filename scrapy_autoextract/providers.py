@@ -84,19 +84,24 @@ class AutoExtractProvider(PageObjectInputProvider):
         self.aiohttp_session = None
         self.crawler.signals.connect(self.close_aiohttp_session,
                                      signal=signals.spider_closed)
-        retries_count = self.settings.getint(
+        self.retries_count = self.settings.getint(
                 "AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES", 3)
-        self.common_request_kwargs = dict(
-            api_key=self.settings.get("AUTOEXTRACT_USER"),
-            endpoint=self.settings.get("AUTOEXTRACT_URL"),
-            max_query_error_retries=retries_count,
-            session=self.aiohttp_session
-        )
         per_domain_concurrency = get_concurrent_requests_per_domain(self.settings)
         self.per_domain_semaphore = SlotsSemaphore(per_domain_concurrency)
         logger.info(
-            f"AutoExtractProvider started. Retries: {retries_count}, "
+            f"AutoExtractProvider started. Retries: {self.retries_count}, "
             f"per domain concurrency: {per_domain_concurrency}"
+        )
+
+    # @property to get actual aiohttp_session, instead of predefined None in `__init__`,
+    # so we can use the same session instead of creating/killing new sessions for each request
+    @property
+    def common_request_kwargs(self):
+        return dict(
+            api_key=self.settings.get("AUTOEXTRACT_USER"),
+            endpoint=self.settings.get("AUTOEXTRACT_URL"),
+            max_query_error_retries=self.retries_count,
+            session=self.aiohttp_session
         )
 
     async def create_aiohttp_session(self) -> aiohttp.ClientSession:
