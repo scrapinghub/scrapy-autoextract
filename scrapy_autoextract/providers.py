@@ -188,6 +188,9 @@ class AutoExtractProvider(PageObjectInputProvider):
                     provided_cls,
                     should_request_html
                 )
+                # When providing same-name arguments in both call and `__init__`
+                # this implementation will not cause any errors (while name=value implementation would),
+                # so predefined `__init__` arguments would override the same arguments in the call
                 awaitable = self.do_request(**{
                     'query': [ae_request],
                     'agg_stats': request_stats,
