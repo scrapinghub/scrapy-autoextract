@@ -1,0 +1,5 @@
+scrapy
+flake8
+pytest
+pytest-twisted
+pytest-mock

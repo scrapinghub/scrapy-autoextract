@@ -16,9 +16,11 @@ Scrapy & Autoextract API integration
 
 
 This library integrates ScrapingHub's AI Enabled Automatic Data Extraction
-into a Scrapy spider using a downloader middleware.
-The middleware adds the result of AutoExtract to ``response.meta['autoextract']``
-for consumption by the spider.
+into a Scrapy spider by two different means:
+
+* with a downloader middleware that injects the AutoExtract responses into ``response.meta['autoextract']``
+  for consumption by the spider.
+* with a `scrapy-poet`_ provider that injects the responses as callback parameters.
 
 
 Installation
@@ -28,7 +30,7 @@ Installation
 
     pip install scrapy-autoextract
 
-scrapy-autoextract requires Python 3.6+
+scrapy-autoextract requires Python 3.6+ for the download middleware and Python 3.7+ for the scrapy-poet provider
 
 
 Usage
@@ -37,7 +39,7 @@ Usage
 There are two different ways to consume the AutoExtract API with this library:
 
 * using our Scrapy middleware
-* using our Page Object providers
+* using our Page Object provider
 
 The middleware
 --------------
@@ -69,13 +71,13 @@ The providers
 Another way of consuming AutoExtract API is using the Page Objects pattern
 proposed by the `web-poet`_ library and implemented by `scrapy-poet`_.
 
-Page Objects their returned Items are defined by the `autoextract-poet`_
+Items returned by Page Objects are defined in the `autoextract-poet`_
 library.
 
 Within the spider, consuming the AutoExtract result is as easy as::
 
     import scrapy
-    from autoextract_poet.page_inputs import AutoExtractArticleData
+    from autoextract_poet import AutoExtractArticleData
 
     class SampleSpider(scrapy.Spider):
 
@@ -99,8 +101,8 @@ This will ignore the Scrapy request and only the AutoExtract API will be fetched
 For example::
 
     import scrapy
-    from autoextract_poet.page_inputs import AutoExtractArticleData
-    from scrapy_poet.utils import DummyResponse
+    from autoextract_poet import AutoExtractArticleData
+    from scrapy_poet import DummyResponse
 
     class SampleSpider(scrapy.Spider):
 
@@ -116,9 +118,8 @@ Configuration
 First, you need to configure scrapy-poet as described on `scrapy-poet's documentation`_
 and then enable AutoExtract providers by putting the following code to Scrapy's ``settings.py`` file::
 
-    # Install AutoExtract providers
-    import scrapy_autoextract.providers
-    scrapy_autoextract.providers.install()
+    # Install AutoExtract provider
+    SCRAPY_POET_PROVIDERS = {"scrapy_autoextract.AutoExtractProvider": 500}
 
     # Enable scrapy-poet's provider injection middleware
     DOWNLOADER_MIDDLEWARES = {
@@ -137,7 +138,7 @@ Checklist:
 
 * scrapy-poet is installed and downloader/injector middleware is configured
 * autoextract-poet is installed (page inputs are imported from this lib)
-* providers are installed on settings.py
+* providers are configured on settings.py
 * Scrapy's asyncio support is enabled on settings.py
 
 Now you should be ready to use our AutoExtract providers.
@@ -147,19 +148,19 @@ Exceptions
 
 While trying to fetch AutoExtract API, providers might raise some exceptions.
 Those exceptions might come from scrapy-autoextract providers themselves,
-`scrapinghub-autoextract`_, or Tenacity, the library used to implement retries.
+`scrapinghub-autoextract`_, or by other means (e.g. ``ConnectionError``).
 For example:
 
 * ``autoextract.aio.errors.RequestError``: raised when a `Request-level error`_ is returned
-* ``tenacity.RetryError``: raised when an error persists even after the retrials
+* ``scrapy_autoextract.errors.QueryError``: raised when a `Query-level error`_ is returned
 
-Check `scrapinghub-autoextract's async errors`_ for exception definitions.
+Check `scrapinghub-autoextract's async errors`_ for other exception definitions.
 
 You can capture those exceptions using an error callback (``errback``)::
 
     import scrapy
-    from autoextract.aio.errors import RequestError, QueryRetryError
-    from tenacity import RetryError
+    from autoextract.aio.errors import RequestError
+    from scrapy_autoextract.errors import QueryError
     from twisted.python.failure import Failure
 
     class SampleSpider(scrapy.Spider):
@@ -178,8 +179,8 @@ You can capture those exceptions using an error callback (``errback``)::
             if failure.check(RequestError):
                 self.logger.error(f"RequestError on {failure.request.url})
 
-            if failure.check(RetryError):
-                self.logger.error(f"RetryError on {failure.request.url})
+            if failure.check(QueryError):
+                self.logger.error(f"QueryError: {failure.message})
 
 See `Scrapy documentation <https://docs.scrapy.org/en/latest/topics/request-response.html#using-errbacks-to-catch-exceptions-in-request-processing>`_
 for more details on how to capture exceptions using request's errback.
@@ -207,9 +208,11 @@ Middleware settings
 Provider settings
 -----------------
 
-- ``AUTOEXTRACT_USER`` [optional] is your AutoExtract API key. Defaults to ``SCRAPINGHUB_AUTOEXTRACT_KEY`` environment variable.
+- ``AUTOEXTRACT_USER`` [optional] is your AutoExtract API key. If not set, it is
+  taken from SCRAPINGHUB_AUTOEXTRACT_KEY environment variable.
 - ``AUTOEXTRACT_URL`` [optional] the AutoExtract service url. Defaults to the official AutoExtract endpoint.
 - ``AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES`` [optional] Max number of retries for Query-level errors. Defaults to ``3``.
+- ``AUTOEXTRACT_CONCURRENT_REQUESTS_PER_DOMAIN`` [optional] Max number of concurrent requests per domain. If not set, the provider will search for the `CONCURRENT_REQUESTS_PER_DOMAIN` (defaults to ``8``) setting instead.
 
 Limitations
 ===========
@@ -239,7 +242,8 @@ When using the AutoExtract providers, be aware that:
 
 * With scrapy-poet integration, retry requests don't go through Scrapy
 * Not all data types are supported with scrapy-poet,
-  currently only Articles and Products are supported
+  currently only Articles, Products and Product Lists are supported with
+  `autoextract-poet`_
 
 .. _`web-poet`: https://github.com/scrapinghub/web-poet
 .. _`scrapy-poet`: https://github.com/scrapinghub/scrapy-poet
