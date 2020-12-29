@@ -212,7 +212,7 @@ Provider settings
   taken from SCRAPINGHUB_AUTOEXTRACT_KEY environment variable.
 - ``AUTOEXTRACT_URL`` [optional] the AutoExtract service url. Defaults to the official AutoExtract endpoint.
 - ``AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES`` [optional] Max number of retries for Query-level errors. Defaults to ``3``.
-- ``AUTOEXTRACT_CONCURRENT_REQUESTS_PER_DOMAIN`` [optional] Max number of concurrent requests per domain. If not set, the provider will search for the `CONCURRENT_REQUESTS_PER_DOMAIN` setting instead. Defaults to ``8``.
+- ``AUTOEXTRACT_CONCURRENT_REQUESTS_PER_DOMAIN`` [optional] Max number of concurrent requests per domain. If not set, the provider will search for the `CONCURRENT_REQUESTS_PER_DOMAIN` (defaults to ``8``) setting instead.
 
 Limitations
 ===========

@@ -59,13 +59,12 @@ def get_concurrent_requests_per_domain(settings: Settings):
     limit_name = "AUTOEXTRACT_CONCURRENT_REQUESTS_PER_DOMAIN"
     concurrency = settings.getint(limit_name, -1)
     # If no AutoExtract-specific limit is provided - use the default one
-    if concurrency is -1:
+    if concurrency == -1:
         limit_name = "CONCURRENT_REQUESTS_PER_DOMAIN"
-        concurrency = settings.getint(limit_name, 8)
+        concurrency = settings.getint(limit_name)
     if concurrency < 1:
         raise ValueError(f"Invalid '{limit_name}' "
                          f"value: {concurrency}")
-    logger.info(f"Setting `concurrent requests per domain` limit to {concurrency}.")
     return concurrency
 
 
