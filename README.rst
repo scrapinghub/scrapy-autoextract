@@ -14,6 +14,10 @@ Scrapy & Autoextract API integration
     :target: https://travis-ci.org/scrapinghub/scrapy-autoextract
     :alt: Build Status
 
+.. image:: https://codecov.io/gh/scrapinghub/scrapy-autoextract/branch/master/graph/badge.svg?token=D6DQUSkios
+    :target: https://codecov.io/gh/scrapinghub/scrapy-autoextract
+    :alt: Coverage report
+
 
 This library integrates ScrapingHub's AI Enabled Automatic Data Extraction
 into a Scrapy spider by two different means:
