@@ -10,9 +10,13 @@ Scrapy & Autoextract API integration
     :target: https://pypi.org/project/scrapy-autoextract/
     :alt: Supported Python Versions
 
-.. image:: https://travis-ci.org/scrapinghub/scrapy-autoextract.svg?branch=master
-    :target: https://travis-ci.org/scrapinghub/scrapy-autoextract
-    :alt: Build Status
+.. image:: https://github.com/scrapinghub/scrapy-autoextract/workflows/tox/badge.svg
+   :target: https://github.com/scrapinghub/scrapy-autoextract/actions
+   :alt: Build Status
+
+.. image:: https://codecov.io/gh/scrapinghub/scrapy-autoextract/branch/master/graph/badge.svg?token=D6DQUSkios
+    :target: https://codecov.io/gh/scrapinghub/scrapy-autoextract
+    :alt: Coverage report
 
 
 This library integrates ScrapingHub's AI Enabled Automatic Data Extraction

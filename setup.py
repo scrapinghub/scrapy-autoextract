@@ -29,12 +29,10 @@ setup(
     install_requires=[
         #'autoextract-poet>=0.0.1',
         'autoextract-poet @ git+https://github.com/scrapinghub/autoextract-poet.git@modern_providers',
-        #'scrapinghub-autoextract>=0.5.1',
-        'scrapinghub-autoextract @ git+https://github.com/scrapinghub/scrapinghub-autoextract.git@reraise#egg=scrapinghub-autoextract',
-        #'scrapy-poet>=0.0.3',
-        'scrapy-poet @ git+https://github.com/scrapinghub/scrapy-poet.git',
-        "aiohttp",
-        "tldextract",
+        'scrapinghub-autoextract>=0.6.0',
+        'scrapy-poet>=0.1.0',
+        'aiohttp',
+        'tldextract',
     ],
     keywords='scrapy autoextract middleware',
     classifiers=[
@@ -48,6 +46,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Framework :: Scrapy',
     ],
 )
