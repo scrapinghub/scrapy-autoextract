@@ -31,9 +31,9 @@ jobs:
     - name: tox
       run: |
         tox -e py
-#    - name: coverage
-#      if: ${{ success() }}
-#      run: bash <(curl -s https://codecov.io/bash)
+    - name: coverage
+      if: ${{ success() }}
+      run: bash <(curl -s https://codecov.io/bash)
 
   check:
     runs-on: ubuntu-latest
