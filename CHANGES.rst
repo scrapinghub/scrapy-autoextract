@@ -1,6 +1,11 @@
 Changes
 =======
 
+0.5.1 (2021-01-22)
+------------------
+* AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES default value is set to 0, to account
+  for backend changes in AutoExtract API
+
 0.5.0 (2021-01-21)
 ------------------
 
