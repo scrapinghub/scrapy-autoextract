@@ -90,7 +90,7 @@ class AutoExtractProvider(PageObjectInputProvider):
         self.crawler.signals.connect(self.close_aiohttp_session,
                                      signal=signals.spider_closed)
         self.retries_count = self.settings.getint(
-                "AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES", 3)
+                "AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES", 0)
         per_domain_concurrency = get_concurrent_requests_per_domain(self.settings)
         self.per_domain_semaphore = SlotsSemaphore(per_domain_concurrency)
         logger.info(
