@@ -1,9 +1,10 @@
 Changes
 =======
 
-TBD
----
+0.5.2 (2021-01-27)
+------------------
 
+* Upgrade ``autoextract-poet`` to 0.2.1
 * Upgrade ``scrapinghub-autoextract`` to 0.6.1
 
 0.5.1 (2021-01-22)

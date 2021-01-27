@@ -27,7 +27,7 @@ setup(
     url='https://github.com/scrapinghub/scrapy-autoextract',
     packages=find_packages(),
     install_requires=[
-        'autoextract-poet>=0.2.0',
+        'autoextract-poet>=0.2.1',
         'scrapinghub-autoextract>=0.6.1',
         'scrapy-poet>=0.1.0',
         'aiohttp',
