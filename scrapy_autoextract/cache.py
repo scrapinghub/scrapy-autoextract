@@ -29,7 +29,7 @@ class DummyCache(_Cache):
         return ''
 
     def __getitem__(self, fingerprint: str):
-        pass
+        raise KeyError()
 
     def __setitem__(self, fingerprint: str, value) -> None:
         pass
