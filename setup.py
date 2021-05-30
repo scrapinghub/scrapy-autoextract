@@ -32,6 +32,7 @@ setup(
         'scrapy-poet>=0.1.0',
         'aiohttp',
         'tldextract',
+        'sqlitedict>=1.7.0',
     ],
     keywords='scrapy autoextract middleware',
     classifiers=[
