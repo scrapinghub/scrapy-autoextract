@@ -18,7 +18,6 @@ from autoextract_poet.page_inputs import (
 from scrapy import Request as ScrapyRequest, signals
 from scrapy.crawler import Crawler
 from scrapy.settings import Settings
-from scrapy.statscollectors import StatsCollector
 from scrapy_poet.page_input_providers import PageObjectInputProvider
 from .errors import QueryError, summarize_exception
 from .slot_semaphore import SlotsSemaphore
