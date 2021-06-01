@@ -1,11 +1,13 @@
 import inspect
 import logging
+import os
 from asyncio import CancelledError
 from typing import Callable, Set, ClassVar, Type, List, Any, Hashable
 
 import aiohttp
-
-
+from scrapy import Request as ScrapyRequest, signals
+from scrapy.crawler import Crawler
+from scrapy.settings import Settings
 from autoextract.aio import request_raw, create_session
 from autoextract.aio.errors import RequestError, \
     ACCOUNT_DISABLED_ERROR_TYPE
@@ -15,14 +17,11 @@ from autoextract.stats import AggStats
 from autoextract_poet.page_inputs import (
     AutoExtractProductData, AutoExtractData, AutoExtractHtml,
 )
-from scrapy import Request as ScrapyRequest, signals
-from scrapy.crawler import Crawler
-from scrapy.settings import Settings
 from scrapy_poet.page_input_providers import PageObjectInputProvider
 from .errors import QueryError, summarize_exception
 from .slot_semaphore import SlotsSemaphore
 from .task_manager import TaskManager
-from .utils import get_domain
+from .utils import get_domain, get_scrapy_data_path
 from .cache import AutoExtractCache, DummyCache
 
 logger = logging.getLogger(__name__)
@@ -95,8 +94,13 @@ class AutoExtractProvider(PageObjectInputProvider):
         per_domain_concurrency = get_concurrent_requests_per_domain(self.settings)
         self.per_domain_semaphore = SlotsSemaphore(per_domain_concurrency)
 
-        cache_path = self.settings.get('AUTOEXTRACT_CACHE_FILENAME')
-        self.cache = AutoExtractCache(cache_path) if cache_path else DummyCache()
+        cache_filename = self.settings.get('AUTOEXTRACT_CACHE_FILENAME')
+        if cache_filename:
+            cache_filename = os.path.join(get_scrapy_data_path(createdir=True),
+                                          cache_filename)
+            self.cache = AutoExtractCache(cache_filename)
+        else:
+            self.cache = DummyCache()
 
         logger.info(
             f"AutoExtractProvider started. Retries: {self.retries_count}, "
