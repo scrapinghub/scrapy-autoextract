@@ -1,6 +1,18 @@
 Changes
 =======
 
+0.6.0 (2021-06-01)
+------------------
+* Switch from ``scrapinghub-autoextract`` to ``zyte-autoextract`` package,
+  following its rename.
+* Upgrade ``scrapy-poet`` to 0.2.0+.
+
+Note that the switch is backwards incompatible if you're
+relying on ``SCRAPINHUB_AUTOEXTRACT_KEY`` environment variable
+to set an API key; it is no longer working. Please use
+either ``ZYTE_ATOEXTRACT_KEY`` env variable or ``AUTOEXTRACT_USER``
+setting instead.
+
 0.5.2 (2021-01-27)
 ------------------
 
