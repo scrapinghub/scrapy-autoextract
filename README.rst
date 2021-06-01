@@ -19,7 +19,7 @@ Scrapy & Autoextract API integration
     :alt: Coverage report
 
 
-This library integrates ScrapingHub's AI Enabled Automatic Data Extraction
+This library integrates Zyte's AI Enabled Automatic Data Extraction
 into a Scrapy spider by two different means:
 
 * with a downloader middleware that injects the AutoExtract responses into ``response.meta['autoextract']``
@@ -96,7 +96,7 @@ Within the spider, consuming the AutoExtract result is as easy as::
 Note that on the example above, we're going to perform two requests:
 
 * one goes through Scrapy (it might use Crawlera, Splash or no proxy at all, depending on your configuration)
-* another goes through AutoExtract API using `scrapinghub-autoextract`_
+* another goes through AutoExtract API using `zyte-autoextract`_
 
 If you don't need the additional request going through Scrapy,
 you can annotate the response argument of your callback with ``DummyResponse``.
@@ -152,13 +152,13 @@ Exceptions
 
 While trying to fetch AutoExtract API, providers might raise some exceptions.
 Those exceptions might come from scrapy-autoextract providers themselves,
-`scrapinghub-autoextract`_, or by other means (e.g. ``ConnectionError``).
+`zyte-autoextract`_, or by other means (e.g. ``ConnectionError``).
 For example:
 
 * ``autoextract.aio.errors.RequestError``: raised when a `Request-level error`_ is returned
 * ``scrapy_autoextract.errors.QueryError``: raised when a `Query-level error`_ is returned
 
-Check `scrapinghub-autoextract's async errors`_ for other exception definitions.
+Check `zyte-autoextract's async errors`_ for other exception definitions.
 
 You can capture those exceptions using an error callback (``errback``)::
 
@@ -213,7 +213,7 @@ Provider settings
 -----------------
 
 - ``AUTOEXTRACT_USER`` [optional] is your AutoExtract API key. If not set, it is
-  taken from SCRAPINGHUB_AUTOEXTRACT_KEY environment variable.
+  taken from ZYTE_AUTOEXTRACT_KEY environment variable.
 - ``AUTOEXTRACT_URL`` [optional] the AutoExtract service url.
   Defaults to the official AutoExtract endpoint.
 - ``AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES`` [optional] Max number of retries for
@@ -244,7 +244,7 @@ When using the AutoExtract middleware, there are some limitations.
   so these kinds of middlewares might have no effect
 * 429 errors could be handled as standard retries when using Scrapy middleware,
   but they're handled properly and automatically with scrapy-poet integration,
-  as it relies on `scrapinghub-autoextract`_.
+  as it relies on `zyte-autoextract`_.
   You may lose some responses with the middleware approach.
 * Overall, retries have a better behavior with scrapy-poet integration
   and it includes support for automatic Query-level errors retries with
@@ -261,8 +261,8 @@ When using the AutoExtract providers, be aware that:
 .. _`web-poet`: https://github.com/scrapinghub/web-poet
 .. _`scrapy-poet`: https://github.com/scrapinghub/scrapy-poet
 .. _`autoextract-poet`: https://github.com/scrapinghub/autoextract-poet
-.. _`scrapinghub-autoextract`: https://github.com/scrapinghub/scrapinghub-autoextract
-.. _`scrapinghub-autoextract's async errors`: https://github.com/scrapinghub/scrapinghub-autoextract/blob/master/autoextract/aio/errors.py
+.. _`zyte-autoextract`: https://github.com/zytedata/zyte-autoextract
+.. _`zyte-autoextract's async errors`: https://github.com/zytedata/zyte-autoextract/blob/master/autoextract/aio/errors.py
 .. _`scrapy-poet's documentation`: https://scrapy-poet.readthedocs.io/en/latest/intro/tutorial.html#configuring-the-project
 .. _`Scrapy's asyncio documentation`: https://docs.scrapy.org/en/latest/topics/asyncio.html
 .. _`Request-level error`: https://doc.scrapinghub.com/autoextract.html#request-level
