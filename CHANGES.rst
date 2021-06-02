@@ -1,11 +1,11 @@
 Changes
 =======
 
-TBR
+0.6.1 (2021-06-02)
 ------------------
 
-* A cache of AutoExtract requests can now be enabled through the
-  setting ``AUTOEXTRACT_CACHE_FILENAME``
+* A cache of AutoExtract requests can now be enabled by
+  setting ``AUTOEXTRACT_CACHE_FILENAME``.
 
 0.6.0 (2021-06-01)
 ------------------
@@ -28,14 +28,14 @@ setting instead.
 0.5.1 (2021-01-22)
 ------------------
 * AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES default value is set to 0, to account
-  for backend changes in AutoExtract API
+  for backend changes in AutoExtract API.
 
 0.5.0 (2021-01-21)
 ------------------
 
 * Mayor internal and API refactor. No backwards compatible.
-* Support for the new ``autoextract-poet`` 0.2.0 types
+* Support for the new ``autoextract-poet`` 0.2.0 types.
 * Use of the new providers interface introduced in ``scrapy-poet``  0.1.0
 * ``scrapinghub-autoextract`` AutoExtract client updated to 0.6.0
-* CI is moved from Travis to Github Actions
-* Python 3.9 support
+* CI is moved from Travis to Github Actions.
+* Python 3.9 support.
