@@ -221,10 +221,10 @@ Provider settings
 - ``AUTOEXTRACT_CONCURRENT_REQUESTS_PER_DOMAIN`` [optional] Max number
   of concurrent requests per domain. If not set, the provider will search
   for the `CONCURRENT_REQUESTS_PER_DOMAIN` (defaults to ``8``) setting instead.
-- ``AUTOEXTRACT_CACHE_FILENAME`` [optioinal] Path to a .sqlite file to use as a
-  cache. File will be created if it doesn't exist. Cache is useful
-  for development; AutoExtract requests bypass standard Scrapy cache when
-  providers are used.
+- ``AUTOEXTRACT_CACHE_FILENAME`` [optional] Filename of a .sqlite file that will
+  be placed in the ``.scrapy`` folder. File will be created if it doesn't exist.
+  Cache is useful for development; AutoExtract requests bypass standard Scrapy
+  cache when providers are used.
 
 Limitations
 ===========

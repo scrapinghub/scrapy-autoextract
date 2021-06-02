@@ -1,6 +1,12 @@
 Changes
 =======
 
+TBR
+------------------
+
+* A cache of AutoExtract requests can now be enabled through the
+  setting ``AUTOEXTRACT_CACHE_FILENAME``
+
 0.6.0 (2021-06-01)
 ------------------
 * Switch from ``scrapinghub-autoextract`` to ``zyte-autoextract`` package,
