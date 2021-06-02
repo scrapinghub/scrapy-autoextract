@@ -1,11 +1,13 @@
 import inspect
 import logging
+import os
 from asyncio import CancelledError
 from typing import Callable, Set, ClassVar, Type, List, Any, Hashable
 
 import aiohttp
-
-
+from scrapy import Request as ScrapyRequest, signals
+from scrapy.crawler import Crawler
+from scrapy.settings import Settings
 from autoextract.aio import request_raw, create_session
 from autoextract.aio.errors import RequestError, \
     ACCOUNT_DISABLED_ERROR_TYPE
@@ -15,16 +17,12 @@ from autoextract.stats import AggStats
 from autoextract_poet.page_inputs import (
     AutoExtractProductData, AutoExtractData, AutoExtractHtml,
 )
-from scrapy import Request as ScrapyRequest, signals
-from scrapy.crawler import Crawler
-from scrapy.settings import Settings
-from scrapy.statscollectors import StatsCollector
+from scrapy_poet.page_input_providers import PageObjectInputProvider
 from .errors import QueryError, summarize_exception
 from .slot_semaphore import SlotsSemaphore
 from .task_manager import TaskManager
-from scrapy_poet.page_input_providers import PageObjectInputProvider
-from .utils import get_domain
-
+from .utils import get_domain, get_scrapy_data_path
+from .cache import AutoExtractCache, DummyCache
 
 logger = logging.getLogger(__name__)
 
@@ -85,17 +83,29 @@ class AutoExtractProvider(PageObjectInputProvider):
         """Initialize provider storing its dependencies as attributes."""
         self.crawler = crawler
         self.settings = crawler.spider.settings
+        self.stats = crawler.stats
         self.task_manager = get_autoextract_task_manager(crawler)
         self.aiohttp_session = None
-        self.crawler.signals.connect(self.close_aiohttp_session,
+        self.crawler.signals.connect(self.on_spider_closed,
                                      signal=signals.spider_closed)
         self.retries_count = self.settings.getint(
                 "AUTOEXTRACT_MAX_QUERY_ERROR_RETRIES", 0)
+
         per_domain_concurrency = get_concurrent_requests_per_domain(self.settings)
         self.per_domain_semaphore = SlotsSemaphore(per_domain_concurrency)
+
+        cache_filename = self.settings.get('AUTOEXTRACT_CACHE_FILENAME')
+        if cache_filename:
+            cache_filename = os.path.join(get_scrapy_data_path(createdir=True),
+                                          cache_filename)
+            self.cache = AutoExtractCache(cache_filename)
+        else:
+            self.cache = DummyCache()
+
         logger.info(
             f"AutoExtractProvider started. Retries: {self.retries_count}, "
-            f"per domain concurrency: {per_domain_concurrency}"
+            f"per domain concurrency: {per_domain_concurrency}, "
+            f"cache: {self.cache}"
         )
 
     # @property to get actual aiohttp_session, instead of predefined None in `__init__`,
@@ -116,12 +126,29 @@ class AutoExtractProvider(PageObjectInputProvider):
         )
         return create_session(connection_pool_size=concurrent_connections)
 
-    async def close_aiohttp_session(self):
+    async def on_spider_closed(self):
         if self.aiohttp_session:
             await self.aiohttp_session.close()
+        self.cache.close()
 
     def create_retry_wrapper(self):
         return RetryFactory().build()
+
+    async def do_request_cached(self, query, *args, **kwargs):
+        assert len(query) == 1  # batches are not supported
+        fp = self.cache.fingerprint(query[0])
+        try:
+            response = self.cache[fp]
+            self.stats.inc_value("autoextract/cache/hit")
+        except KeyError:
+            self.stats.inc_value("autoextract/cache/miss")
+            response = await self.do_request(query, *args, **kwargs)
+            if "error" not in response[0]:  # don't cache errors
+                self.cache[fp] = response
+                self.stats.inc_value("autoextract/cache/firsthand")
+            else:
+                self.stats.inc_value("autoextract/cache/uncacheable")
+        return response
 
     async def do_request(self, *args, **kwargs):
         return await request_raw(*args, **kwargs)
@@ -159,8 +186,7 @@ class AutoExtractProvider(PageObjectInputProvider):
 
     async def __call__(self,
                        to_provide: Set[Callable],
-                       request: ScrapyRequest,
-                       stats: StatsCollector
+                       request: ScrapyRequest
                        ) -> List:
         """Make an AutoExtract request and build a Page Input of provided class
         based on API response data.
@@ -185,9 +211,9 @@ class AutoExtractProvider(PageObjectInputProvider):
             page_type = provided_cls.page_type
 
             def inc_stats(suffix, value=1, both=False):
-                stats.inc_value(f"autoextract/total{suffix}", value)
+                self.stats.inc_value(f"autoextract/total{suffix}", value)
                 if both:
-                    stats.inc_value(f"autoextract/{page_type}{suffix}", value)
+                    self.stats.inc_value(f"autoextract/{page_type}{suffix}", value)
 
             try:
                 # html is requested only a single time to save resources
@@ -201,7 +227,7 @@ class AutoExtractProvider(PageObjectInputProvider):
                 # When providing same-name arguments in both call and `__init__`
                 # this implementation will not cause any errors (while name=value implementation would),
                 # so predefined `__init__` arguments would override the same arguments in the call
-                awaitable = self.do_request(**{
+                awaitable = self.do_request_cached(**{
                     'query': [ae_request],
                     'agg_stats': request_stats,
                     **self.common_request_kwargs,

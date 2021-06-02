@@ -221,6 +221,10 @@ Provider settings
 - ``AUTOEXTRACT_CONCURRENT_REQUESTS_PER_DOMAIN`` [optional] Max number
   of concurrent requests per domain. If not set, the provider will search
   for the `CONCURRENT_REQUESTS_PER_DOMAIN` (defaults to ``8``) setting instead.
+- ``AUTOEXTRACT_CACHE_FILENAME`` [optional] Filename of a .sqlite file that will
+  be placed in the ``.scrapy`` folder. File will be created if it doesn't exist.
+  Cache is useful for development; AutoExtract requests bypass standard Scrapy
+  cache when providers are used.
 
 Limitations
 ===========
@@ -245,6 +249,7 @@ When using the AutoExtract middleware, there are some limitations.
 * Overall, retries have a better behavior with scrapy-poet integration
   and it includes support for automatic Query-level errors retries with
   no need to change ``RETRY_HTTP_CODES``.
+* AutoExtract-specific cache (``AUTOEXTRACT_CACHE_FILENAME``) is not supported
 
 When using the AutoExtract providers, be aware that:
 
