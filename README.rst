@@ -81,21 +81,21 @@ library.
 Within the spider, consuming the AutoExtract result is as easy as::
 
     import scrapy
-    from autoextract_poet import AutoExtractArticleData
+    from autoextract_poet.pages import AutoExtractArticlePage
+
 
     class SampleSpider(scrapy.Spider):
-
         name = "sample"
 
-        def parse(self, response, article: AutoExtractArticleData):
+        def parse(self, response, article_page: AutoExtractArticlePage):
             # We're making two requests here:
             # - one through Scrapy to build the response argument
-            # - another through providers to build the article argument
-            yield article.to_item()
+            # - the other through the providers to build the article_page argument
+            yield article_page.to_item()
 
 Note that on the example above, we're going to perform two requests:
 
-* one goes through Scrapy (it might use Crawlera, Splash or no proxy at all, depending on your configuration)
+* one goes through Scrapy (it might use Smart Proxy, Splash or no proxy at all, depending on your configuration)
 * another goes through AutoExtract API using `zyte-autoextract`_
 
 If you don't need the additional request going through Scrapy,
@@ -105,16 +105,31 @@ This will ignore the Scrapy request and only the AutoExtract API will be fetched
 For example::
 
     import scrapy
-    from autoextract_poet import AutoExtractArticleData
+    from autoextract_poet.pages import AutoExtractArticlePage
     from scrapy_poet import DummyResponse
 
     class SampleSpider(scrapy.Spider):
-
         name = "sample"
 
-        def parse(self, response: DummyResponse, article: AutoExtractArticleData):
+        def parse(self, response: DummyResponse, article_page: AutoExtractArticlePage):
             # We're making a single request here to build the article argument
-            yield article.to_item()
+            yield article_page.to_item()
+
+
+The examples above extract an article from the page, but you may want to
+extract a different type of item, like a product or a job posting. It is
+as easy as using the correct type annotation in the callback. This
+is how the callback looks like if we need to extract a real state
+from the page::
+
+    def parse(self,
+              response: DummyResponse,
+              real_estate_page: AutoExtractRealEstatePage):
+        yield real_estate_page.to_item()
+
+You can even use ``AutoExtractWebPage`` if what you need is the raw browser HTML to
+extract some additional data. Visit the full list of `supported page types`_
+to get a better idea of the supported pages.
 
 Configuration
 ^^^^^^^^^^^^^
@@ -164,27 +179,30 @@ You can capture those exceptions using an error callback (``errback``)::
 
     import scrapy
     from autoextract.aio.errors import RequestError
+    from autoextract_poet.pages import AutoExtractArticlePage
     from scrapy_autoextract.errors import QueryError
+    from scrapy_poet import DummyResponse
     from twisted.python.failure import Failure
 
     class SampleSpider(scrapy.Spider):
-
         name = "sample"
         urls = [...]
 
         def start_requests(self):
             for url in self.urls:
-                yield scrapy.Request(url, callback=self.parse_article, errback=self.errback_article)
+                yield scrapy.Request(url, callback=self.parse_article,
+                                     errback=self.errback_article)
 
-        def parse_article(self, response: DummyResponse, article: AutoExtractArticleData):
-            yield article.to_item()
+        def parse_article(self, response: DummyResponse,
+                          article_page: AutoExtractArticlePage):
+            yield article_page.to_item()
 
         def errback_article(self, failure: Failure):
             if failure.check(RequestError):
-                self.logger.error(f"RequestError on {failure.request.url})
+                self.logger.error(f"RequestError on {failure.request.url}")
 
             if failure.check(QueryError):
-                self.logger.error(f"QueryError: {failure.message})
+                self.logger.error(f"QueryError: {failure.value.message}")
 
 See `Scrapy documentation <https://docs.scrapy.org/en/latest/topics/request-response.html#using-errbacks-to-catch-exceptions-in-request-processing>`_
 for more details on how to capture exceptions using request's errback.
@@ -254,9 +272,6 @@ When using the AutoExtract middleware, there are some limitations.
 When using the AutoExtract providers, be aware that:
 
 * With scrapy-poet integration, retry requests don't go through Scrapy
-* Not all data types are supported with scrapy-poet,
-  currently only Articles, Products and Product Lists are supported with
-  `autoextract-poet`_
 
 .. _`web-poet`: https://github.com/scrapinghub/web-poet
 .. _`scrapy-poet`: https://github.com/scrapinghub/scrapy-poet
@@ -267,3 +282,4 @@ When using the AutoExtract providers, be aware that:
 .. _`Scrapy's asyncio documentation`: https://docs.scrapy.org/en/latest/topics/asyncio.html
 .. _`Request-level error`: https://doc.scrapinghub.com/autoextract.html#request-level
 .. _`Query-level error`: https://doc.scrapinghub.com/autoextract.html#query-level
+.. _`supported page types`: https://autoextract-poet.readthedocs.io/en/more_page_types/_autosummary/autoextract_poet.pages.html
