@@ -83,7 +83,6 @@ Within the spider, consuming the AutoExtract result is as easy as::
     import scrapy
     from autoextract_poet.pages import AutoExtractArticlePage
 
-
     class SampleSpider(scrapy.Spider):
         name = "sample"
 
