@@ -1,7 +1,7 @@
 Changes
 =======
 
-0.7.0 (2021-08-04)
+0.7.0 (2021-08-05)
 ------------------
 
 * Support for all Automatic Extraction API page types by upgrading to
