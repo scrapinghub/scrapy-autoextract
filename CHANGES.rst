@@ -1,6 +1,14 @@
 Changes
 =======
 
+0.7.0 (2021-08-05)
+------------------
+
+* Support for all Automatic Extraction API page types by upgrading to
+  ``autoextract-poet`` 0.3.0
+* Rename Scrapinghub references to Zyte
+* Update README
+
 0.6.1 (2021-06-02)
 ------------------
 

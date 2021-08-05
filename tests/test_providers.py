@@ -15,7 +15,11 @@ from autoextract.stats import AggStats
 from autoextract_poet import (
     AutoExtractArticleData, AutoExtractProductData, AutoExtractHtml)
 from tests.utils import assert_stats, request_error, async_test
-from autoextract_poet.page_inputs import AutoExtractData
+from autoextract_poet.page_inputs import AutoExtractData, \
+    AutoExtractArticleListData, AutoExtractCommentsData, \
+    AutoExtractForumPostsData, AutoExtractJobPostingData, \
+    AutoExtractProductListData, AutoExtractRealEstateData, \
+    AutoExtractReviewsData, AutoExtractVehicleData
 from scrapy import Spider
 from scrapy.crawler import Crawler
 from scrapy_autoextract.providers import (
@@ -26,9 +30,16 @@ from scrapy_poet.injection import get_injector_for_testing, get_response_for_tes
 
 DATA_INPUTS = (
     AutoExtractArticleData,
+    AutoExtractArticleListData,
+    AutoExtractCommentsData,
+    AutoExtractForumPostsData,
+    AutoExtractJobPostingData,
     AutoExtractProductData,
+    AutoExtractProductListData,
+    AutoExtractRealEstateData,
+    AutoExtractReviewsData,
+    AutoExtractVehicleData,
 )
-
 
 def test_stop_spider_on_account_disabled(mocker: MockerFixture):
     class Engine:
