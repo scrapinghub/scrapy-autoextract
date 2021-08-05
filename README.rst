@@ -281,4 +281,4 @@ When using the AutoExtract providers, be aware that:
 .. _`Scrapy's asyncio documentation`: https://docs.scrapy.org/en/latest/topics/asyncio.html
 .. _`Request-level error`: https://doc.scrapinghub.com/autoextract.html#request-level
 .. _`Query-level error`: https://doc.scrapinghub.com/autoextract.html#query-level
-.. _`supported page types`: https://autoextract-poet.readthedocs.io/en/more_page_types/_autosummary/autoextract_poet.pages.html
+.. _`supported page types`: https://autoextract-poet.readthedocs.io/en/stable/_autosummary/autoextract_poet.pages.html#module-autoextract_poet.pages
