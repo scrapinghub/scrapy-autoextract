@@ -98,7 +98,8 @@ class AutoExtractProvider(PageObjectInputProvider):
         if cache_filename:
             cache_filename = os.path.join(get_scrapy_data_path(createdir=True),
                                           cache_filename)
-            self.cache = AutoExtractCache(cache_filename)
+            compressed = self.settings.getbool('AUTOEXTRACT_CACHE_GZIP', True)
+            self.cache = AutoExtractCache(cache_filename, compressed=compressed)
         else:
             self.cache = DummyCache()
 

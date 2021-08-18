@@ -1,5 +1,8 @@
 import abc
 import json
+import gzip
+import pickle
+import sqlite3
 
 import sqlitedict
 from autoextract.request import Request
@@ -39,8 +42,30 @@ class DummyCache(_Cache):
 
 
 class AutoExtractCache(_Cache):
-    def __init__(self, path):
-        self.db = sqlitedict.SqliteDict(path, autocommit=True)
+    def __init__(self, path, *, compressed=True):
+        self.compressed = compressed
+        tablename = 'responses_gzip' if compressed else 'responses'
+        self.db = sqlitedict.SqliteDict(path,
+                                        tablename=tablename,
+                                        autocommit=True,
+                                        encode=self.encode,
+                                        decode=self.decode)
+
+    def encode(self, obj):
+        # based on sqlitedict.encode
+        data = pickle.dumps(obj, pickle.HIGHEST_PROTOCOL)
+        if self.compressed:
+            data = gzip.compress(data, compresslevel=3)
+        return sqlite3.Binary(data)
+
+    def decode(self, obj):
+        # based on sqlitedict.decode
+        data = bytes(obj)
+        if self.compressed:
+            # gzip is slightly less efficient than raw zlib, but it does
+            # e.g. crc checks out of box
+            data = gzip.decompress(data)
+        return pickle.loads(data)
 
     @classmethod
     def fingerprint(cls, request: Request) -> str:
@@ -51,7 +76,9 @@ class AutoExtractCache(_Cache):
         )
 
     def __str__(self):
-        return f"AutoExtractCache <{self.db.filename} | {len(self.db)} records>"
+        return f"AutoExtractCache <{self.db.filename} | " \
+               f"compressed: {self.compressed} | " \
+               f"{len(self.db)} records>"
 
     def __getitem__(self, fingerprint: str):
         return self.db[fingerprint]
