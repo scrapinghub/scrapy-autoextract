@@ -242,6 +242,9 @@ Provider settings
   be placed in the ``.scrapy`` folder. File will be created if it doesn't exist.
   Cache is useful for development; AutoExtract requests bypass standard Scrapy
   cache when providers are used.
+- ``AUTOEXTRACT_CACHE_GZIP`` [optional] when True (default), cached AutoExtract
+  responses are compressed using gzip. Set this option to False to turn
+  compression off.
 
 Limitations
 ===========
