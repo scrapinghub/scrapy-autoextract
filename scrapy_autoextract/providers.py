@@ -206,7 +206,7 @@ class AutoExtractProvider(PageObjectInputProvider):
             if not issubclass(provided_cls, AutoExtractData):
                 raise RuntimeError(
                     f"Unexpected {provided_cls} requested. Probably a bug in the provider "
-                    "or in scrapy-poet itself")
+                    "or in scrapy-autoextract itself")
             request_stats = AggStats()
             is_first_request = idx == 0
             page_type = provided_cls.page_type
