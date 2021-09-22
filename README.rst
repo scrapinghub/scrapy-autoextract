@@ -212,14 +212,14 @@ Settings
 Middleware settings
 -------------------
 
-- ``AUTOEXTRACT_USER`` [mandatory] is your AutoExtract API key
+- ``AUTOEXTRACT_USER`` [mandatory] your AutoExtract API key.
 - ``AUTOEXTRACT_URL`` [optional] the AutoExtract service url. Defaults to autoextract.scrapinghub.com.
 - ``AUTOEXTRACT_TIMEOUT`` [optional] sets the response timeout from AutoExtract. Defaults to 660 seconds.
   Can also be defined by setting the "download_timeout" in the request.meta.
 - ``AUTOEXTRACT_PAGE_TYPE`` [mandatory] defines the kind of document to be extracted.
-  Current available options are `"product"` and `"article"`.
+  See currently `supported page types <https://docs.zyte.com/automatic-extraction.html#result-fields>`_.
   Can also be defined on ``spider.page_type``, or ``{'autoextract': {'pageType': '...'}}`` request meta.
-  This is required for the AutoExtract classifier to know what kind of page needs to be extracted.
+  This is required for the AutoExtract classifier to know what the extraction result should be (article, job posting, product, etc.).
 - `extra` [optional] allows sending extra payload data to your AutoExtract request.
   Must be specified as ``{'autoextract': {'extra': {}}}`` request meta and must be a dict.
 - ``AUTOEXTRACT_SLOT_POLICY`` [optional] Download concurrency options. Defaults to ``SlotPolicy.PER_DOMAIN``
