@@ -2,7 +2,7 @@ import inspect
 import logging
 import os
 from asyncio import CancelledError
-from typing import Callable, Set, ClassVar, Type, List, Any, Hashable
+from typing import Callable, Set, ClassVar, List, Any, Hashable
 
 import aiohttp
 from scrapy import Request as ScrapyRequest, signals
