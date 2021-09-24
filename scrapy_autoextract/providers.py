@@ -2,7 +2,7 @@ import inspect
 import logging
 import os
 from asyncio import CancelledError
-from typing import Callable, Set, ClassVar, Type, List, Any, Hashable
+from typing import Callable, Set, ClassVar, List, Any, Hashable
 
 import aiohttp
 from scrapy import Request as ScrapyRequest, signals
@@ -68,8 +68,6 @@ def get_concurrent_requests_per_domain(settings: Settings):
 
 class AutoExtractProvider(PageObjectInputProvider):
     """Provider for AutoExtract data"""
-    page_type_class: ClassVar[Type]
-
     # pageType requested when only html is required
     page_type_class_for_html: ClassVar[AutoExtractData] = AutoExtractProductData
     html_query_attribute: ClassVar[str] = "fullHtml"
