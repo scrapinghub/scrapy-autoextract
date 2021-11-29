@@ -33,6 +33,7 @@ setup(
         'aiohttp',
         'tldextract',
         'sqlitedict>=1.7.0',
+        'scrapinghub',
     ],
     keywords='scrapy autoextract middleware',
     classifiers=[

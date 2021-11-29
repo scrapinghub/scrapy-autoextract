@@ -118,7 +118,7 @@ For example::
 The examples above extract an article from the page, but you may want to
 extract a different type of item, like a product or a job posting. It is
 as easy as using the correct type annotation in the callback. This
-is how the callback looks like if we need to extract a real state
+is how the callback looks like if we need to extract real estate data
 from the page::
 
     def parse(self,
@@ -245,6 +245,12 @@ Provider settings
 - ``AUTOEXTRACT_CACHE_GZIP`` [optional] when True (default), cached AutoExtract
   responses are compressed using gzip. Set this option to False to turn
   compression off.
+- ``AUTOEXTRACT_CACHE_COLLECTION`` [optional] when True, AutoExtract responses
+  are stored in Scrapy Cloud collection named after job id,
+  e.g. ``111_222_333_cache`` for job ``111/222/333``.
+  Using collections is mutually exclusive with using ``AUTOEXTRACT_CACHE_FILENAME`` setting.
+  If the spider is run locally, project number should be set in ``DEV_PROJECT`` setting.
+  Default collection name is ``dev_cache``.
 
 Limitations
 ===========
