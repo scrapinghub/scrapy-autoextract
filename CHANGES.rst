@@ -1,6 +1,14 @@
 Changes
 =======
 
+TBR
+------------------
+
+* The AutoExtract provider now supports the new providers API for caching
+* The preferred pageType for HTML requests (``AutoExtractProductData``)
+  is now chosen always if listed as dependency instead of just choosing
+  the first dependency ``pageType`` to request the HTML
+
 0.7.0 (2021-08-05)
 ------------------
 
