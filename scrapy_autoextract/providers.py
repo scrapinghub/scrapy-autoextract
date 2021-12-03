@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Callable, Set, ClassVar, List, Any, Hashable, Sequence, Type, TypeVar
 
 import aiohttp
+import attr
 from scrapy import Request as ScrapyRequest, signals, Request
 from scrapy.crawler import Crawler
 from scrapy.settings import Settings
@@ -71,7 +72,7 @@ def get_concurrent_requests_per_domain(settings: Settings):
     return concurrency
 
 
-@dataclass
+@attr.define()
 class AERequestSpec:
     query: List[AutoExtractRequest]
     should_request_html: bool
