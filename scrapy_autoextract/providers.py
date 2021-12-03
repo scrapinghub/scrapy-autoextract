@@ -3,7 +3,6 @@ import json
 import logging
 import os
 from asyncio import CancelledError
-from dataclasses import dataclass
 from typing import Callable, Set, ClassVar, List, Any, Hashable, Sequence, Type, TypeVar
 
 import aiohttp
