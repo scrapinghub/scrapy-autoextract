@@ -34,7 +34,7 @@ Installation
 
     pip install scrapy-autoextract
 
-scrapy-autoextract requires Python 3.6+ for the download middleware and Python 3.7+ for the scrapy-poet provider
+scrapy-autoextract requires Python 3.7+ for the download middleware and Python 3.7+ for the scrapy-poet provider
 
 
 Usage
