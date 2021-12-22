@@ -291,9 +291,9 @@ def test_provider_cache():
     injector = get_injector_for_testing({})
     request = get_response_for_testing(None).request
     provider = AutoExtractProvider(injector.crawler)
-    finguerprint = provider.fingerprint(
+    fingerprint = provider.fingerprint(
         {AutoExtractHtml, AutoExtractProductData, AutoExtractArticleData},
         request)
-    assert finguerprint == """{"article": {"articleBodyRaw": false, "url": "http://example.com"}, "product": {"articleBodyRaw": false, "fullHtml": true, "url": "http://example.com"}}"""
+    assert fingerprint == """{"article": {"articleBodyRaw": false, "url": "http://example.com"}, "product": {"articleBodyRaw": false, "fullHtml": true, "url": "http://example.com"}}"""
     assert provider.serialize("foo") == "foo"
     assert provider.deserialize("bar") == "bar"

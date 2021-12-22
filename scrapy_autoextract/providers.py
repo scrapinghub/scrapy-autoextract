@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 _TASK_MANAGER = "_autoextract_task_manager"
 
 
-AEDataType = TypeVar('AEDataType', bound=AutoExtractData, covariant=True)
+AEDataType_co = TypeVar('AEDataType_co', bound=AutoExtractData, covariant=True)
 
 
 def get_autoextract_task_manager(crawler: Crawler) -> TaskManager:
@@ -186,7 +186,7 @@ class AutoExtractProvider(PageObjectInputProvider):
 
     def get_filled_request(self,
                            request: ScrapyRequest,
-                           provided_cls: Type[AEDataType],
+                           provided_cls: Type[AEDataType_co],
                            should_request_html: bool) -> AutoExtractRequest:
         """Return a filled request for AutoExtract"""
         ae_request = AutoExtractRequest(
@@ -197,7 +197,7 @@ class AutoExtractProvider(PageObjectInputProvider):
             ae_request.extra = {self.html_query_attribute: True}
         return ae_request
 
-    def list_required_requests(self, to_provide: Set[Callable], request: ScrapyRequest):
+    def list_required_requests(self, to_provide: Set[Callable], request: ScrapyRequest) -> List[AERequestSpec]:
         is_html_required = AutoExtractHtml in to_provide
         to_provide -= {AutoExtractHtml}
         is_extraction_required = bool(to_provide)

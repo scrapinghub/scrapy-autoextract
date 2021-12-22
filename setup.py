@@ -29,7 +29,7 @@ setup(
     install_requires=[
         'autoextract-poet>=0.3.0',
         'zyte-autoextract>=0.7.0',
-        'scrapy-poet @ git+https://git@github.com/scrapinghub/scrapy-poet@injector_record_replay_native#egg=scrapy-poet',
+        'scrapy-poet @ git+https://git@github.com/scrapinghub/scrapy-poet@master#egg=scrapy-poet',
         'aiohttp',
         'tldextract',
         'sqlitedict>=1.7.0',
