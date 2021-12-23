@@ -297,3 +297,4 @@ def test_provider_cache():
     assert fingerprint == """{"article": {"articleBodyRaw": false, "url": "http://example.com"}, "product": {"articleBodyRaw": false, "fullHtml": true, "url": "http://example.com"}}"""
     assert provider.serialize("foo") == "foo"
     assert provider.deserialize("bar") == "bar"
+    assert provider.has_cache_support

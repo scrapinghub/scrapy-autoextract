@@ -19,7 +19,10 @@ from autoextract.stats import AggStats
 from autoextract_poet.page_inputs import (
     AutoExtractProductData, AutoExtractData, AutoExtractHtml,
 )
-from scrapy_poet.page_input_providers import PageObjectInputProvider
+from scrapy_poet.page_input_providers import (
+    PageObjectInputProvider,
+    CacheDataProviderMixin,
+)
 from .errors import QueryError, summarize_exception
 from .slot_semaphore import SlotsSemaphore
 from .task_manager import TaskManager
@@ -79,7 +82,7 @@ class AERequestSpec:
     provided_cls: Callable
 
 
-class AutoExtractProvider(PageObjectInputProvider):
+class AutoExtractProvider(PageObjectInputProvider, CacheDataProviderMixin):
     """Provider for AutoExtract data"""
     # pageType requested when only html is required
     page_type_class_for_html: ClassVar[AutoExtractData] = AutoExtractProductData
