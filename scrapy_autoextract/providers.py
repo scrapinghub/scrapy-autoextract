@@ -103,7 +103,10 @@ class AutoExtractProvider(PageObjectInputProvider):
             self.cache = AutoExtractCache(cache_filename, compressed=compressed)
         elif cache_collection:
             project = get_project_from_job() or self.settings.get('DEV_PROJECT')
-            self.cache = ScrapyCloudCollectionCache(project, get_collection_name())
+            self.cache = ScrapyCloudCollectionCache(
+                project,
+                get_collection_name(self)
+            )
         else:
             self.cache = DummyCache()
 

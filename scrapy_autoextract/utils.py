@@ -30,9 +30,12 @@ def get_scrapy_data_path(createdir=True):
     return path
 
 
-def get_collection_name():
+def get_collection_name(provider):
+    from_settings = provider.settings.get('AUTOEXTRACT_CACHE_COLLECTION_NAME')
     scrapy_job = os.environ.get('SCRAPY_JOB')
-    if scrapy_job:
+    if from_settings:
+        return from_settings
+    elif scrapy_job:
         return f"{scrapy_job.replace('/', '_')}_cache"
     return 'dev_cache'
 

@@ -93,12 +93,16 @@ class AutoExtractCache(_Cache):
 
 class ScrapyCloudCollectionCache(_Cache):
     def __init__(self, project, collection):
-        sc = ScrapinghubClient()
-        self.collection = sc.get_project(project).collections.get_store(collection)
+        self.sc = ScrapinghubClient()
+        self.collection = self.sc.get_project(project).collections.get_store(collection)
 
     @classmethod
     def fingerprint(cls, request: Request) -> str:
-        return request.url
+        return json.dumps(
+            request.as_dict(),
+            ensure_ascii=False,
+            sort_keys=True
+        )
 
     def __getitem__(self, fingerprint: str):
         try:
@@ -113,4 +117,4 @@ class ScrapyCloudCollectionCache(_Cache):
         )
 
     def close(self):
-        pass
+        self.sc.close()

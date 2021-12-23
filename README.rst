@@ -251,6 +251,7 @@ Provider settings
   Using collections is mutually exclusive with using ``AUTOEXTRACT_CACHE_FILENAME`` setting.
   If the spider is run locally, project number should be set in ``DEV_PROJECT`` setting.
   Default collection name is ``dev_cache``.
+  The collection name can be customised by using ``AUTOEXTRACT_CACHE_COLLECTION_NAME`` setting.
 
 Limitations
 ===========
