@@ -7,7 +7,7 @@ from typing import Callable, Set, ClassVar, List, Any, Hashable, Sequence, Type,
 
 import aiohttp
 import attr
-from scrapy import Request as ScrapyRequest, signals, Request
+from scrapy import Request as ScrapyRequest, signals
 from scrapy.crawler import Crawler
 from scrapy.settings import Settings
 from autoextract.aio import request_raw, create_session
@@ -74,7 +74,7 @@ def get_concurrent_requests_per_domain(settings: Settings):
     return concurrency
 
 
-@attr.define()
+@attr.define
 class AERequestSpec:
     query: List[AutoExtractRequest]
     should_request_html: bool
@@ -298,7 +298,7 @@ class AutoExtractProvider(PageObjectInputProvider, CacheDataProviderMixin):
 
         return instances
 
-    def fingerprint(self, to_provide: Set[Callable], request: Request) -> str:
+    def fingerprint(self, to_provide: Set[Callable], request: ScrapyRequest) -> str:
         queries = [spec.query[0].as_dict() for spec in self.list_required_requests(to_provide, request)]
         # pageType is the key to sort by it
         by_page_type = {query['pageType']: query for query in queries}
