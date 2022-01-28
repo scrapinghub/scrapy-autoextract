@@ -127,8 +127,22 @@ from the page::
         yield real_estate_page.to_item()
 
 You can even use ``AutoExtractWebPage`` if what you need is the raw browser HTML to
-extract some additional data. Visit the full list of `supported page types`_
-to get a better idea of the supported pages.
+extract some additional data. Visit the full list of `supported page types
+<https://docs.zyte.com/automatic-extraction.html#result-fields>`_ to get a better idea
+of the supported pages.
+
+Lastly, if you have a an AutoExtract subscription with `fullHtml` set to True,
+you can access the HTML data that was used by AutoExtract in case you need it.
+Here's an example:
+
+.. code-block:: python
+
+    def parse_product(self, response: DummyResponse, product_page: AutoExtractProductPage, html_page: AutoExtractWebPage):
+        product_item = product_page.to_item()
+
+        # You can easily interact with the html_page using these selectors.
+        html_page.css(...)
+        html_page.xpath(...)
 
 Configuration
 ^^^^^^^^^^^^^
