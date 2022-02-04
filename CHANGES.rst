@@ -6,6 +6,12 @@ TBR
 
 * removed support for Python 3.6
 * added support for Python 3.10
+* add _optional_ setting ``AUTOEXTRACT_RESPONSE_ERROR_LOG_LEVEL`` to set the
+  logging level for the errors encountered.
+* add _optional_ setting ``AUTOEXTRACT_ALLOWED_RESPONSE_ERRORS`` which is a
+  collection of error strings from AutoExtract's responses to prevent
+  ``AutoExtractError`` from being raised when errors are valid _(e.g. a website
+  returns a valid page but with a 404 response status)_.
 
 0.7.0 (2021-08-05)
 ------------------
