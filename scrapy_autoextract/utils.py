@@ -28,3 +28,19 @@ def get_scrapy_data_path(createdir=True):
     if createdir:
         os.makedirs(path, exist_ok=True)
     return path
+
+
+def get_collection_name(provider):
+    from_settings = provider.settings.get('AUTOEXTRACT_CACHE_COLLECTION_NAME')
+    scrapy_job = os.environ.get('SCRAPY_JOB')
+    if from_settings:
+        return from_settings
+    elif scrapy_job:
+        return f"{scrapy_job.replace('/', '_')}_cache"
+    return 'dev_cache'
+
+
+def get_project_from_job():
+    scrapy_job = os.environ.get('SCRAPY_JOB')
+    if scrapy_job:
+        return scrapy_job.split('/')[0]

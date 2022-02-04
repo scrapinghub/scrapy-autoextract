@@ -1,11 +1,12 @@
 import abc
-import json
 import gzip
+import json
 import pickle
 import sqlite3
 
 import sqlitedict
 from autoextract.request import Request
+from scrapinghub import NotFound, ScrapinghubClient
 
 
 class _Cache(abc.ABC):
@@ -88,3 +89,32 @@ class AutoExtractCache(_Cache):
 
     def close(self):
         self.db.close()
+
+
+class ScrapyCloudCollectionCache(_Cache):
+    def __init__(self, project, collection):
+        self.sc = ScrapinghubClient()
+        self.collection = self.sc.get_project(project).collections.get_store(collection)
+
+    @classmethod
+    def fingerprint(cls, request: Request) -> str:
+        return json.dumps(
+            request.as_dict(),
+            ensure_ascii=False,
+            sort_keys=True
+        )
+
+    def __getitem__(self, fingerprint: str):
+        try:
+            return self.collection.get(fingerprint)
+        except NotFound:
+            raise KeyError
+
+    def __setitem__(self, fingerprint: str, value) -> None:
+        self.collection.set(
+            {'_key': fingerprint,
+             'value': value}
+        )
+
+    def close(self):
+        self.sc.close()

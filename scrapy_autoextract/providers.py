@@ -2,27 +2,28 @@ import inspect
 import logging
 import os
 from asyncio import CancelledError
-from typing import Callable, Set, ClassVar, List, Any, Hashable
+from typing import Any, Callable, ClassVar, Hashable, List, Set
 
 import aiohttp
-from scrapy import Request as ScrapyRequest, signals
-from scrapy.crawler import Crawler
-from scrapy.settings import Settings
-from autoextract.aio import request_raw, create_session
-from autoextract.aio.errors import RequestError, \
-    ACCOUNT_DISABLED_ERROR_TYPE
+from autoextract.aio import create_session, request_raw
+from autoextract.aio.errors import ACCOUNT_DISABLED_ERROR_TYPE, RequestError
 from autoextract.aio.retry import RetryFactory
 from autoextract.request import Request as AutoExtractRequest
 from autoextract.stats import AggStats
-from autoextract_poet.page_inputs import (
-    AutoExtractProductData, AutoExtractData, AutoExtractHtml,
-)
+from autoextract_poet.page_inputs import (AutoExtractData, AutoExtractHtml,
+                                          AutoExtractProductData)
+from scrapy import Request as ScrapyRequest
+from scrapy import signals
+from scrapy.crawler import Crawler
+from scrapy.settings import Settings
 from scrapy_poet.page_input_providers import PageObjectInputProvider
+
+from .cache import AutoExtractCache, DummyCache, ScrapyCloudCollectionCache
 from .errors import QueryError, summarize_exception
 from .slot_semaphore import SlotsSemaphore
 from .task_manager import TaskManager
-from .utils import get_domain, get_scrapy_data_path
-from .cache import AutoExtractCache, DummyCache
+from .utils import (get_collection_name, get_domain, get_project_from_job,
+                    get_scrapy_data_path)
 
 logger = logging.getLogger(__name__)
 
@@ -93,11 +94,19 @@ class AutoExtractProvider(PageObjectInputProvider):
         self.per_domain_semaphore = SlotsSemaphore(per_domain_concurrency)
 
         cache_filename = self.settings.get('AUTOEXTRACT_CACHE_FILENAME')
+        cache_collection = self.settings.get('AUTOEXTRACT_CACHE_COLLECTION')
+        check_configuration(cache_filename, cache_collection)
         if cache_filename:
             cache_filename = os.path.join(get_scrapy_data_path(createdir=True),
                                           cache_filename)
             compressed = self.settings.getbool('AUTOEXTRACT_CACHE_GZIP', True)
             self.cache = AutoExtractCache(cache_filename, compressed=compressed)
+        elif cache_collection:
+            project = get_project_from_job() or self.settings.get('DEV_PROJECT')
+            self.cache = ScrapyCloudCollectionCache(
+                project,
+                get_collection_name(self)
+            )
         else:
             self.cache = DummyCache()
 
@@ -263,3 +272,11 @@ class AutoExtractProvider(PageObjectInputProvider):
             inc_stats("/pages/success", both=True)
 
         return instances
+
+
+def check_configuration(cache_filename, cache_collection):
+    if all([cache_filename, cache_collection]):
+        raise ValueError(
+            "Configuration error. "
+            "Both AUTOEXTRACT_CACHE_FILENAME and AUTOEXTRACT_CACHE_COLLECTION defined in settings."
+        )
