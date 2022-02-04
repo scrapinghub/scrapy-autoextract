@@ -50,6 +50,10 @@ class AutoExtractMiddleware(object):
         self._api_user = self.settings['AUTOEXTRACT_USER']
         self._api_pass = ''
         self.page_type = self.settings['AUTOEXTRACT_PAGE_TYPE']
+        self._log_response_error_level = (
+            self.settings.get("AUTOEXTRACT_RESPONSE_ERROR_LOG_LEVEL")
+            or logging.DEBUG
+        )
         if not self.page_type:
             self.page_type = getattr(crawler.spider, 'page_type', None)
         self.timeout = max(
@@ -164,13 +168,13 @@ class AutoExtractMiddleware(object):
             response_object = json.loads(body)
         except Exception:
             self.inc_metric('autoextract/errors/json_decode')
-            self._log_debug_error(response, body)
+            self._log_response_error(response, body)
             raise AutoExtractError('Cannot parse JSON response from AutoExtract'
                                    ' for {}: {}'.format(url, response.body[:MAX_ERROR_BODY]))
 
         if response.status != 200:
             self.inc_metric('autoextract/errors/response_error/{}'.format(response.status))
-            self._log_debug_error(response, body)
+            self._log_response_error(response, body)
             raise AutoExtractError('Received error from AutoExtract for '
                                    '{}: {}'.format(url, response_object))
 
@@ -179,13 +183,13 @@ class AutoExtractMiddleware(object):
             result = response_object[0]
         else:
             self.inc_metric('autoextract/errors/type_error')
-            self._log_debug_error(response, body)
+            self._log_response_error(response, body)
             raise AutoExtractError('Received invalid response from AutoExtract for '
                                    '{}: {}'.format(url, response_object))
 
         if result.get('error'):
             self.inc_metric('autoextract/errors/result_error')
-            self._log_debug_error(response, body)
+            self._log_response_error(response, body)
             raise AutoExtractError('Received error from AutoExtract for '
                                    '{}: {}'.format(url, result["error"]))
 
@@ -284,12 +288,17 @@ class AutoExtractMiddleware(object):
     def set_metric(self, key, value):
         self.crawler.stats.set_value(key, value)
 
-    def _log_debug_error(self, response, body):
+    def _log_response_error(self, response, body):
         if len(body) > MAX_ERROR_BODY:
             half_body = MAX_ERROR_BODY // 2
             body = body[:half_body] + ' [...] ' + body[-half_body:]
-        logger.debug('AutoExtract response status=%i  headers=%s  content=%s', response.status,
-                     response.headers.to_unicode_dict(), body)
+        logger.log(
+            self._log_response_error_level,
+            'AutoExtract response status=%i  headers=%s  content=%s',
+            response.status,
+            response.headers.to_unicode_dict(),
+            body
+        )
 
     def autoextract_latency_stats(self):
         self.set_metric('autoextract/response_count', self.nr_resp)

@@ -239,6 +239,8 @@ Middleware settings
 - ``AUTOEXTRACT_SLOT_POLICY`` [optional] Download concurrency options. Defaults to ``SlotPolicy.PER_DOMAIN``
   - If set to ``SlotPolicy.PER_DOMAIN``, then consider setting ``SCHEDULER_PRIORITY_QUEUE = 'scrapy.pqueues.DownloaderAwarePriorityQueue'``
   to make better usage of AutoExtract concurrency and avoid delays.
+- ``AUTOEXTRACT_RESPONSE_ERROR_LOG_LEVEL`` [optional] Sets the logging level for logging the errors encountered.
+  _(default: logging.DEBUG)_
 
 Provider settings
 -----------------
