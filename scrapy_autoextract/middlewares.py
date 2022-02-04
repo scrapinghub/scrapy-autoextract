@@ -43,6 +43,9 @@ class AutoExtractMiddleware(object):
     DEFAULT_URL = 'https://autoextract.scrapinghub.com/v1/extract'
     DEFAULT_TIMEOUT = 660
     DEFAULT_SLOT_POLICY = SlotPolicy.PER_DOMAIN
+    DEFAULT_ALLOWED_REPONSE_ERRORS = {
+        "Downloader error: http404",  # some sites return 404 as a valid response
+    }
 
     def __init__(self, crawler):
         self.crawler = crawler
@@ -50,9 +53,12 @@ class AutoExtractMiddleware(object):
         self._api_user = self.settings['AUTOEXTRACT_USER']
         self._api_pass = ''
         self.page_type = self.settings['AUTOEXTRACT_PAGE_TYPE']
-        self._log_response_error_level = (
-            self.settings.get("AUTOEXTRACT_RESPONSE_ERROR_LOG_LEVEL")
-            or logging.DEBUG
+        self._log_response_error_level = self.settings.get(
+            "AUTOEXTRACT_RESPONSE_ERROR_LOG_LEVEL", logging.DEBUG
+        )
+        self._allowed_response_errors = (
+            set(self.settings.get("AUTOEXTRACT_ALLOWED_RESPONSE_ERRORS", []))
+            | self.DEFAULT_ALLOWED_REPONSE_ERRORS
         )
         if not self.page_type:
             self.page_type = getattr(crawler.spider, 'page_type', None)
@@ -187,7 +193,8 @@ class AutoExtractMiddleware(object):
             raise AutoExtractError('Received invalid response from AutoExtract for '
                                    '{}: {}'.format(url, response_object))
 
-        if result.get('error'):
+        error = result.get('error')
+        if error and error not in self._allowed_response_errors:
             self.inc_metric('autoextract/errors/result_error')
             self._log_response_error(response, body)
             raise AutoExtractError('Received error from AutoExtract for '

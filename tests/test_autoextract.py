@@ -6,6 +6,7 @@ from w3lib.http import basic_auth_header
 from scrapy.http import Request, Response
 from scrapy.spiders import Spider
 from scrapy.utils.test import get_crawler
+from scrapy.http import HtmlResponse
 
 from scrapy_autoextract import AutoExtractMiddleware
 from scrapy_autoextract.middlewares import AutoExtractError, AutoExtractConfigError
@@ -101,6 +102,29 @@ def test_request_error():
     resp = Response(out.url, request=out, body=err)
     with pytest.raises(AutoExtractError):
         mw.process_response(out, resp, spider)
+
+
+def test_response_allowed_error():
+    settings = {**MW_SETTINGS, "AUTOEXTRACT_ALLOWED_RESPONSE_ERRORS": {"custom error"}}
+    mw = _mock_mw(spider, settings)
+    req = Request('http://quotes.toscrape.com', meta=AUTOX_META)
+    out = mw.process_request(req, spider)
+
+    # Allowed errors like such this http404 shouldn't raise AutoExtractError
+    # since it the website is the one actually returning a 404 response status.
+    err = b'[{"query":{},"error":"Downloader error: http404"}]'
+    resp = Response(out.url, request=out, body=err)
+    result = mw.process_response(out, resp, spider)
+    assert isinstance(result, HtmlResponse)
+
+    req = Request('http://quotes.toscrape.com', meta=AUTOX_META)
+    out = mw.process_request(req, spider)
+
+    # User specified errors using "AUTOEXTRACT_ALLOWED_RESPONSE_ERRORS"
+    err = b'[{"query":{},"error":"custom error"}]'
+    resp = Response(out.url, request=out, body=err)
+    result = mw.process_response(out, resp, spider)
+    assert isinstance(result, HtmlResponse)
 
 
 def test_timeout():
