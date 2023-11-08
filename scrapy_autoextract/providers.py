@@ -1,10 +1,12 @@
 import inspect
+import json
 import logging
 import os
 from asyncio import CancelledError
-from typing import Callable, Set, ClassVar, List, Any, Hashable
+from typing import Callable, Set, ClassVar, List, Any, Hashable, Sequence, Type, TypeVar
 
 import aiohttp
+import attr
 from scrapy import Request as ScrapyRequest, signals
 from scrapy.crawler import Crawler
 from scrapy.settings import Settings
@@ -17,7 +19,10 @@ from autoextract.stats import AggStats
 from autoextract_poet.page_inputs import (
     AutoExtractProductData, AutoExtractData, AutoExtractHtml,
 )
-from scrapy_poet.page_input_providers import PageObjectInputProvider
+from scrapy_poet.page_input_providers import (
+    PageObjectInputProvider,
+    CacheDataProviderMixin,
+)
 from .errors import QueryError, summarize_exception
 from .slot_semaphore import SlotsSemaphore
 from .task_manager import TaskManager
@@ -28,6 +33,9 @@ logger = logging.getLogger(__name__)
 
 
 _TASK_MANAGER = "_autoextract_task_manager"
+
+
+AEDataType_co = TypeVar('AEDataType_co', bound=AutoExtractData, covariant=True)
 
 
 def get_autoextract_task_manager(crawler: Crawler) -> TaskManager:
@@ -66,11 +74,20 @@ def get_concurrent_requests_per_domain(settings: Settings):
     return concurrency
 
 
-class AutoExtractProvider(PageObjectInputProvider):
+@attr.define
+class AERequestSpec:
+    query: List[AutoExtractRequest]
+    should_request_html: bool
+    is_extraction_required: bool
+    provided_cls: Callable
+
+
+class AutoExtractProvider(PageObjectInputProvider, CacheDataProviderMixin):
     """Provider for AutoExtract data"""
     # pageType requested when only html is required
     page_type_class_for_html: ClassVar[AutoExtractData] = AutoExtractProductData
     html_query_attribute: ClassVar[str] = "fullHtml"
+    name = "autoextract"
 
     @classmethod
     def provided_classes(cls, type_: Callable) -> bool:
@@ -172,7 +189,7 @@ class AutoExtractProvider(PageObjectInputProvider):
 
     def get_filled_request(self,
                            request: ScrapyRequest,
-                           provided_cls: AutoExtractData,
+                           provided_cls: Type[AEDataType_co],
                            should_request_html: bool) -> AutoExtractRequest:
         """Return a filled request for AutoExtract"""
         ae_request = AutoExtractRequest(
@@ -183,6 +200,41 @@ class AutoExtractProvider(PageObjectInputProvider):
             ae_request.extra = {self.html_query_attribute: True}
         return ae_request
 
+    def list_required_requests(self, to_provide: Set[Callable], request: ScrapyRequest) -> List[AERequestSpec]:
+        is_html_required = AutoExtractHtml in to_provide
+        to_provide -= {AutoExtractHtml}
+        is_extraction_required = bool(to_provide)
+        if is_html_required and not is_extraction_required:
+            # At least one request is required to get html
+            to_provide = {self.page_type_class_for_html}
+        if not to_provide:
+            return []
+        # Use the recommended type for html request, otherwise use the first one
+        class_for_html = (self.page_type_class_for_html
+                          if self.page_type_class_for_html in to_provide
+                          else next(iter(to_provide)))
+        specs = []
+        for idx, provided_cls in enumerate(to_provide):
+            if not issubclass(provided_cls, AutoExtractData):
+                raise RuntimeError(
+                    f"Unexpected {provided_cls} requested. Probably a bug in the provider "
+                    "or in scrapy-poet itself")
+
+            # html is requested only a single time to save resources
+            should_request_html = is_html_required and provided_cls is class_for_html
+            ae_request = self.get_filled_request(
+                request,
+                provided_cls,
+                should_request_html
+            )
+            specs.append(AERequestSpec(
+                [ae_request],
+                should_request_html,
+                is_extraction_required,
+                provided_cls
+            ))
+        return specs
+
     async def __call__(self,
                        to_provide: Set[Callable],
                        request: ScrapyRequest
@@ -192,22 +244,11 @@ class AutoExtractProvider(PageObjectInputProvider):
         """
         if not self.aiohttp_session:
             self.aiohttp_session = await self.create_aiohttp_session()
-        is_html_required = AutoExtractHtml in to_provide
-        to_provide -= {AutoExtractHtml}
-        is_extraction_required = bool(to_provide)
-        if is_html_required and not is_extraction_required:
-            # At least one request is required to get html
-            to_provide = {self.page_type_class_for_html}
 
         instances = []
-        for idx, provided_cls in enumerate(to_provide):
-            if not issubclass(provided_cls, AutoExtractData):
-                raise RuntimeError(
-                    f"Unexpected {provided_cls} requested. Probably a bug in the provider "
-                    "or in scrapy-poet itself")
+        for spec in self.list_required_requests(to_provide, request):
             request_stats = AggStats()
-            is_first_request = idx == 0
-            page_type = provided_cls.page_type
+            page_type = spec.provided_cls.page_type
 
             def inc_stats(suffix, value=1, both=False):
                 self.stats.inc_value(f"autoextract/total{suffix}", value)
@@ -215,19 +256,12 @@ class AutoExtractProvider(PageObjectInputProvider):
                     self.stats.inc_value(f"autoextract/{page_type}{suffix}", value)
 
             try:
-                # html is requested only a single time to save resources
-                should_request_html = is_html_required and is_first_request
                 slot = self.get_per_domain_concurrency_slot(request)
-                ae_request = self.get_filled_request(
-                    request,
-                    provided_cls,
-                    should_request_html
-                )
                 # When providing same-name arguments in both call and `__init__`
                 # this implementation will not cause any errors (while name=value implementation would),
                 # so predefined `__init__` arguments would override the same arguments in the call
                 awaitable = self.do_request_cached(**{
-                    'query': [ae_request],
+                    'query': spec.query,
                     'agg_stats': request_stats,
                     **self.common_request_kwargs,
                 })
@@ -251,15 +285,29 @@ class AutoExtractProvider(PageObjectInputProvider):
                 inc_stats("/attempts/count", request_stats.n_attempts)
                 inc_stats("/attempts/billable", request_stats.n_billable_query_responses)
 
-            if should_request_html:
+            if spec.should_request_html:
                 instances.append(AutoExtractHtml(url=data[page_type]['url'],
                                                  html=data['html']))
                 inc_stats("/pages/html", both=True)
 
-            if is_extraction_required:
+            if spec.is_extraction_required:
                 without_html = {k: v for k, v in data.items() if k != "html"}
-                instances.append(provided_cls(data=without_html))
+                instances.append(spec.provided_cls(data=without_html))
 
             inc_stats("/pages/success", both=True)
 
         return instances
+
+    def fingerprint(self, to_provide: Set[Callable], request: ScrapyRequest) -> str:
+        queries = [spec.query[0].as_dict() for spec in self.list_required_requests(to_provide, request)]
+        # pageType is the key to sort by it
+        by_page_type = {query['pageType']: query for query in queries}
+        for query in by_page_type.values():
+            query.pop("pageType")
+        return json.dumps(by_page_type, sort_keys=True)
+
+    def serialize(self, result: Sequence[Any]) -> Any:
+        return result
+
+    def deserialize(self, data: Any) -> Sequence[Any]:
+        return data
